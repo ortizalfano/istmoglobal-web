@@ -6,7 +6,7 @@ import {
   Globe2, Mail, Phone, MapPin, ChevronRight, Star, Truck, Shield,
   Zap, BarChart2, Users, Package, Settings, LogOut, Plus, Trash2,
   Edit, Filter, LayoutGrid, Award, ShoppingCart, MessageSquare, Edit3, CheckCircle, Minus, Trash,
-  Ship, Container, Globe, Target, Activity // Added missing icons
+  Ship, Container, Globe, Target, Activity, Lock // Added Lock icon
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import { motion, AnimatePresence } from 'framer-motion';
