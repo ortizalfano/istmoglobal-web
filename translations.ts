@@ -7,6 +7,7 @@ export const translations: Translation = {
   navCatalog: { en: 'Catalog', es: 'Catálogo' },
   navAbout: { en: 'About Us', es: 'Nosotros' },
   navContact: { en: 'Contact', es: 'Contacto' },
+  navMarkets: { en: 'Markets', es: 'Mercados' },
   navAdmin: { en: 'Admin Portal', es: 'Portal Admin' },
 
   // Hero
