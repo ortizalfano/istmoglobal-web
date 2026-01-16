@@ -1,5 +1,6 @@
 import sql from './db';
 import { Brand, Category, Product, Prospect, User, Order } from './types';
+import bcrypt from 'bcryptjs';
 
 // --- Brands ---
 export const fetchBrands = async (): Promise<Brand[]> => {
@@ -158,11 +159,13 @@ export const deleteProspect = async (id: string) => {
 // --- Users ---
 export const createUser = async (user: Omit<User, 'id'>) => {
     const id = crypto.randomUUID();
-    // In a real app, password should be hashed!
     try {
+        // Hash password with bcrypt (10 rounds)
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+
         await sql`
             INSERT INTO users (id, email, role, name, company, password, details)
-            VALUES (${id}, ${user.email}, ${user.role}, ${user.name}, ${user.company || null}, ${user.password}, ${JSON.stringify(user.details || {})})
+            VALUES (${id}, ${user.email}, ${user.role}, ${user.name}, ${user.company || null}, ${hashedPassword}, ${JSON.stringify(user.details || {})})
         `;
         return { ...user, id };
     } catch (e) {
@@ -191,18 +194,26 @@ export const deleteUser = async (id: string) => {
 
 export const loginUser = async (email: string, pass: string): Promise<User | null> => {
     try {
-        const users = await sql`SELECT * FROM users WHERE email = ${email} AND password = ${pass}`;
+        // Get user by email only
+        const users = await sql`SELECT * FROM users WHERE email = ${email}`;
+
         if (users.length > 0) {
             const u = users[0];
-            return {
-                id: u.id,
-                email: u.email,
-                role: u.role,
-                name: u.name,
-                company: u.company,
-                details: u.details,
-                createdAt: u.created_at
-            } as User;
+
+            // Compare provided password with hashed password
+            const isPasswordValid = await bcrypt.compare(pass, u.password);
+
+            if (isPasswordValid) {
+                return {
+                    id: u.id,
+                    email: u.email,
+                    role: u.role,
+                    name: u.name,
+                    company: u.company,
+                    details: u.details,
+                    createdAt: u.created_at
+                } as User;
+            }
         }
         return null;
     } catch (e) {
