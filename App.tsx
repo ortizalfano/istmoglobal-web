@@ -1835,9 +1835,9 @@ const MarketsPage = () => {
   const { t } = useContext(LanguageContext);
   const markets = [
     { name: 'USA', img: 'https://images.unsplash.com/photo-1501466044931-62695aada8e9?auto=format&fit=crop&w=800&q=80' },
-    { name: 'España', img: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Cuba', img: 'https://images.unsplash.com/photo-1500051638674-ff996a0ec29e?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Panamá', img: 'https://images.unsplash.com/photo-1512813498716-3e640fed3f39?auto=format&fit=crop&w=800&q=80' },
+    { name: 'España', img: '/images/spain-madrid.png' },
+    { name: 'Cuba', img: '/images/cuba-havana.png' },
+    { name: 'Panamá', img: '/images/panama-city.png' },
   ];
 
   return (
