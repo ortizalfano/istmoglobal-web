@@ -1834,10 +1834,10 @@ const LoginPage = () => {
 const MarketsPage = () => {
   const { t } = useContext(LanguageContext);
   const markets = [
-    { name: 'USA', desc: t('marketUSA'), img: 'https://images.unsplash.com/photo-1501466044931-62695aada8e9?auto=format&fit=crop&w=800&q=80' },
-    { name: 'España', desc: t('marketSpain'), img: 'https://images.unsplash.com/photo-1543783232-af9942f4a472?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Cuba', desc: t('marketCuba'), img: 'https://images.unsplash.com/photo-1500051638674-ff996a0ec29e?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Panamá', desc: t('marketPanama'), img: 'https://images.unsplash.com/photo-1541339907198-e08756eaa539?auto=format&fit=crop&w=800&q=80' },
+    { name: 'USA', img: 'https://images.unsplash.com/photo-1501466044931-62695aada8e9?auto=format&fit=crop&w=800&q=80' },
+    { name: 'España', img: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Cuba', img: 'https://images.unsplash.com/photo-1500051638674-ff996a0ec29e?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Panamá', img: 'https://images.unsplash.com/photo-1512813498716-3e640fed3f39?auto=format&fit=crop&w=800&q=80' },
   ];
 
   return (
@@ -1857,7 +1857,6 @@ const MarketsPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
                 <div className="absolute bottom-10 left-10 right-10">
                   <h3 className="text-4xl font-black text-white mb-2">{m.name}</h3>
-                  <p className="text-slate-200 font-medium text-lg leading-relaxed">{m.desc}</p>
                 </div>
               </div>
             </FadeIn>
