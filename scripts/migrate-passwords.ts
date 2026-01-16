@@ -1,4 +1,4 @@
-import sql from './api/db.js';
+import sql from '../db';
 import bcrypt from 'bcryptjs';
 
 /**
@@ -45,8 +45,8 @@ async function migratePasswords() {
         console.log(`   Skipped: ${skipped}`);
         console.log(`   Total: ${users.length}\n`);
 
-    } catch (error) {
-        console.error('❌ Migration failed:', error);
+    } catch (error: any) {
+        console.error('❌ Migration failed:', error.message);
         process.exit(1);
     }
 
