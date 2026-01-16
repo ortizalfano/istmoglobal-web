@@ -643,10 +643,6 @@ const HomePage = () => {
             </div>
           </motion.div>
         </div>
-
-        <div className="absolute bottom-10 right-10 z-10 hidden lg:block opacity-20">
-          <Container size={200} className="text-white" />
-        </div>
       </section>
 
       {/* 1. About Detailed Section */}
