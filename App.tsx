@@ -1701,6 +1701,12 @@ const ProspectManagement = () => {
                         <label className="text-xs font-bold uppercase text-slate-400">Empresa</label>
                         <p className="font-bold text-slate-900 text-lg">{selectedItem.company || 'N/A'}</p>
                       </div>
+                      {!('role' in selectedItem) && (
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold uppercase text-slate-400">Email</label>
+                          <p className="font-bold text-slate-900 text-lg">{selectedItem.email}</p>
+                        </div>
+                      )}
                       {'details' in selectedItem && (selectedItem as User).details?.taxId && (
                         <div className="space-y-1">
                           <label className="text-xs font-bold uppercase text-slate-400">RUC / ID Fiscal</label>
@@ -1793,10 +1799,15 @@ const LoginPage = () => {
   const [err, setErr] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(email, pass)) { navigate('/admin'); }
-    else { setErr(true); setTimeout(() => setErr(false), 3000); }
+    const success = await login(email, pass);
+    if (success) {
+      navigate('/admin');
+    } else {
+      setErr(true);
+      setTimeout(() => setErr(false), 3000);
+    }
   };
 
   return (
@@ -1811,7 +1822,7 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-1">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Email</label>
-              <input type="email" placeholder="admin@istmoglobal.com" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-4 focus:ring-blue-900/5 transition-all font-medium"
+              <input type="email" placeholder="tu@email.com" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-4 focus:ring-blue-900/5 transition-all font-medium"
                 value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-1">
