@@ -188,7 +188,12 @@ const Navbar = () => {
             </div>
           </div>
 
-          <div className="lg:hidden flex items-center gap-4">
+          <div className="lg:hidden flex items-center gap-2">
+            {/* Language Selector - Mobile */}
+            <div className="flex items-center bg-slate-100 rounded-full p-1 border border-slate-200">
+              <button onClick={() => setLang('en')} className={`text-[10px] font-bold px-2 py-1 rounded-full transition-all ${lang === 'en' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-400'}`}>EN</button>
+              <button onClick={() => setLang('es')} className={`text-[10px] font-bold px-2 py-1 rounded-full transition-all ${lang === 'es' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-400'}`}>ES</button>
+            </div>
             <CartButton />
             <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600 p-2 bg-slate-100 rounded-lg">
               {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -2020,7 +2025,26 @@ const ClientLoginPage = () => {
 
 // --- App Entry ---
 const App = () => {
-  const [lang, setLang] = useState<Language>('es');
+  // Detect browser language on first load
+  const detectBrowserLanguage = (): Language => {
+    const browserLang = navigator.language.toLowerCase();
+    // If Spanish, return 'es', otherwise default to 'en'
+    if (browserLang.startsWith('es')) {
+      return 'es';
+    }
+    return 'en'; // Default to English for all other languages
+  };
+
+  const [lang, setLang] = useState<Language>(() => {
+    // Check localStorage first, then browser language
+    const saved = localStorage.getItem('language') as Language;
+    return saved || detectBrowserLanguage();
+  });
+
+  // Save language preference to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('language', lang);
+  }, [lang]);
   const [user, setUser] = useState<User | null>(null);
 
   const t = (key: string) => translations[key]?.[lang] || key;
