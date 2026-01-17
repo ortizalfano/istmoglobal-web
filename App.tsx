@@ -36,6 +36,7 @@ const AuthContext = createContext<{
 const CartDrawer = () => {
   const { items, isOpen, setIsOpen, removeFromCart, updateQuantity, total, clearCart } = useCart();
   const { user } = useContext(AuthContext);
+  const { t } = useContext(LanguageContext);
   const navigate = useNavigate();
 
   if (!isOpen) return null;
@@ -76,13 +77,13 @@ const CartDrawer = () => {
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
       <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col p-6 animate-in slide-in-from-right duration-300">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-black text-slate-900">Tu Pedido</h2>
+          <h2 className="text-2xl font-black text-slate-900">{t('cartTitle')}</h2>
           <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-100 rounded-full"><X size={24} /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-6">
           {items.length === 0 ? (
-            <div className="text-center py-10 text-slate-400 font-medium">No hay productos en el carrito.</div>
+            <div className="text-center py-10 text-slate-400 font-medium">{t('cartEmpty')}</div>
           ) : (
             items.map(item => (
               <div key={item.id} className="flex gap-4">
@@ -104,7 +105,7 @@ const CartDrawer = () => {
 
         <div className="border-t border-slate-100 pt-6 mt-6">
           <div className="flex justify-between items-center mb-6">
-            <span className="text-slate-500 font-bold">Total Estimado</span>
+            <span className="text-slate-500 font-bold">{t('cartEstimatedTotal')}</span>
             <span className="text-3xl font-black text-blue-900">${total.toFixed(2)}</span>
           </div>
           <button onClick={handleCheckout} disabled={items.length === 0} className="w-full py-4 bg-green-600 text-white rounded-2xl font-black hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl shadow-green-600/20">
@@ -140,9 +141,9 @@ const Navbar = () => {
     <div className="flex items-center gap-3">
       <div className="text-right hidden xl:block">
         <div className="text-sm font-bold text-slate-900">{user.name}</div>
-        <div className="text-[10px] font-black uppercase text-blue-600 tracking-widest">{user.role === 'b2b' ? 'Mayorista' : user.role === 'admin' ? 'Admin' : 'Cliente'}</div>
+        <div className="text-[10px] font-black uppercase text-blue-600 tracking-widest">{user.role === 'b2b' ? t('roleWholesale') : user.role === 'admin' ? t('roleAdmin') : t('roleCustomer')}</div>
       </div>
-      <button onClick={logout} className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-colors" title="Cerrar Sesión">
+      <button onClick={logout} className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-colors" title={t('btnLogout')}>
         <LogOut size={18} />
       </button>
     </div>
@@ -210,7 +211,7 @@ const Navbar = () => {
               <Link to="/about" onClick={() => setIsOpen(false)} className="block text-xl font-bold text-slate-800">{t('navAbout')}</Link>
               <Link to="/catalog" onClick={() => setIsOpen(false)} className="block text-xl font-bold text-slate-800">{t('navCatalog')}</Link>
               <Link to="/contact" onClick={() => setIsOpen(false)} className="block text-xl font-bold text-blue-900">{t('navContact')}</Link>
-              <Link to="/admin/login" onClick={() => setIsOpen(false)} className="block text-xl font-bold text-slate-400">Portal Admin</Link>
+              <Link to="/admin/login" onClick={() => setIsOpen(false)} className="block text-xl font-bold text-slate-400">{t('navAdmin')}</Link>
             </div>
           </motion.div>
         )}
@@ -339,13 +340,13 @@ const ProductDetailModal = ({ product, isOpen, onClose }: { product: Product | n
 
             <div className="space-y-6 flex-1">
               <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-black text-slate-900">${product.price?.toFixed(2) || 'Consultar'}</span>
+                <span className="text-5xl font-black text-slate-900">${product.price?.toFixed(2) || t('priceInquire')}</span>
                 <span className="text-slate-400 font-bold">USD</span>
               </div>
 
               <div className="prose prose-slate">
                 <p className="text-slate-600 leading-relaxed font-medium">
-                  {product.description || 'Neumático de alto rendimiento diseñado para ofrecer durabilidad y seguridad en todo tipo de condiciones.'}
+                  {product.description || t('heroDescription')}
                 </p>
               </div>
 
@@ -406,8 +407,8 @@ const FeaturedBrands = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <FadeIn>
-            <span className="text-blue-600 font-black uppercase tracking-widest text-sm mb-4 block">Nuestro Catálogo</span>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6">Nuestras Marcas</h2>
+            <span className="text-blue-600 font-black uppercase tracking-widest text-sm mb-4 block">{t('catalogOurCatalog')}</span>
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6">{t('catalogOurBrands')}</h2>
             <div className="w-20 h-2 bg-blue-600 mx-auto rounded-full"></div>
           </FadeIn>
         </div>
@@ -429,7 +430,7 @@ const FeaturedBrands = () => {
                   <span className="text-xl font-black text-slate-300 group-hover:text-blue-900 transition-colors uppercase">{brand.name}</span>
                 )}
                 <div className="absolute inset-x-0 bottom-4 text-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">Ver Productos</span>
+                  <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">{t('btnViewProducts')}</span>
                 </div>
               </div>
             </FadeIn>
@@ -565,7 +566,7 @@ const HeroSearch = () => {
           >
             <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
               <span className="text-xs font-black uppercase text-slate-400 tracking-widest">{results.length} Resultados</span>
-              <button onClick={() => { setBrandQuery(''); setSelectedSize('') }} className="text-xs font-bold text-red-400 hover:text-red-500">Borrar Filtros</button>
+              <button onClick={() => { setBrandQuery(''); setSelectedSize('') }} className="text-xs font-bold text-red-400 hover:text-red-500">{t('btnClearFilters')}</button>
             </div>
             {results.map((p) => {
               const brandName = brands.find(b => b.id === p.brandId)?.name || 'Unknown';
@@ -627,10 +628,10 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 backdrop-blur-md text-blue-400 text-xs font-bold mb-8 tracking-[0.2em] uppercase border border-blue-500/20">
-              <Ship size={14} className="animate-pulse" /> Global Trade Operations
+              <Ship size={14} className="animate-pulse" /> {t('heroOperations')}
             </span>
             <h1 className="text-6xl md:text-8xl font-black text-white mb-8 leading-[1] tracking-tight">
-              Trading <br /><span className="text-blue-500">Possibilities</span>.
+              {t('heroTrading')}<br /><span className="text-[#5B9EFF]">{t('heroPossibilities')}</span>.
             </h1>
             <p className="text-xl md:text-2xl text-slate-300 mb-8 leading-relaxed max-w-2xl font-medium">
               {t('heroSubtitle')}
@@ -680,11 +681,11 @@ const HomePage = () => {
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-2 p-6 bg-slate-50 rounded-3xl border border-slate-100">
                   <div className="text-blue-900 font-black text-3xl tracking-tighter">150+</div>
-                  <div className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Global Partners</div>
+                  <div className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">{t('aboutGlobalPartners')}</div>
                 </div>
                 <div className="space-y-2 p-6 bg-slate-50 rounded-3xl border border-slate-100">
                   <div className="text-blue-900 font-black text-3xl tracking-tighter">1M+</div>
-                  <div className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Units Moved Annually</div>
+                  <div className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">{t('aboutUnitsAnnually')}</div>
                 </div>
               </div>
             </FadeIn>
@@ -875,7 +876,7 @@ const AboutPage = () => {
                 <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:rotate-12 transition-transform duration-700">
                   <Target size={120} />
                 </div>
-                <h3 className="text-3xl font-black mb-6">Nuestra Misión</h3>
+                <h3 className="text-3xl font-black mb-6">{t('aboutMission')}</h3>
                 <p className="text-xl text-blue-100/80 leading-relaxed font-medium">
                   Simplificar el comercio global de neumáticos a través de una logística inteligente, ética y de alta precisión, conectando fabricantes y mercados con excelencia operativa.
                 </p>
@@ -886,7 +887,7 @@ const AboutPage = () => {
                 <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:-rotate-12 transition-transform duration-700">
                   <Activity size={120} />
                 </div>
-                <h3 className="text-3xl font-black mb-6">Nuestra Visión</h3>
+                <h3 className="text-3xl font-black mb-6">{t('aboutVision')}</h3>
                 <p className="text-xl text-slate-500 leading-relaxed font-medium">
                   Ser el socio logístico más confiable y eficiente del mundo en el sector automotriz, liderando con innovación digital y expansión estratégica sostenible.
                 </p>
@@ -1041,7 +1042,7 @@ const ContactPage = () => {
               <div className="flex items-center gap-6 p-8 bg-slate-50 rounded-[2rem] border border-slate-100 shadow-sm">
                 <div className="bg-blue-900 p-4 rounded-2xl text-white shadow-lg"><Mail size={24} /></div>
                 <div>
-                  <div className="text-xs font-black text-slate-400 uppercase tracking-widest">Email Principal</div>
+                  <div className="text-xs font-black text-slate-400 uppercase tracking-widest">{t('contactPrimaryEmail')}</div>
                   <div className="text-lg font-bold text-slate-900">info@istmoglobal.com</div>
                 </div>
               </div>
@@ -1111,7 +1112,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </nav>
         <div className="p-8">
           <button onClick={logout} className="flex items-center gap-4 px-6 py-4 rounded-2xl w-full hover:bg-red-500/10 hover:text-red-500 transition-all font-bold group">
-            <LogOut size={22} className="group-hover:-translate-x-1 transition-transform" /> Cerrar Sesión
+            <LogOut size={22} className="group-hover:-translate-x-1 transition-transform" /> {t('btnLogout')}
           </button>
         </div>
       </aside>
@@ -1162,7 +1163,7 @@ const AdminOrders = () => {
                   </span>
                 </td>
                 <td className="p-6">
-                  <button onClick={() => alert(order.items)} className="text-blue-600 font-bold text-sm hover:underline">Ver Detalle</button>
+                  <button onClick={() => alert(order.items)} className="text-blue-600 font-bold text-sm hover:underline">{t('adminViewDetail')}</button>
                 </td>
               </tr>
             ))}
@@ -1208,8 +1209,8 @@ const BrandManagement = () => {
   return (
     <div className="space-y-10">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-black text-slate-900">Gestión de Marcas</h1>
-        <button onClick={() => { setCurrentBrand({ name: '', description: '', image: '' }); setIsEditing(true); }} className="px-8 py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20">Nueva Marca</button>
+        <h1 className="text-3xl font-black text-slate-900">{t('adminBrandManagement')}</h1>
+        <button onClick={() => { setCurrentBrand({ name: '', description: '', image: '' }); setIsEditing(true); }} className="px-8 py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20">{t('adminNewBrand')}</button>
       </div>
 
       <AnimatePresence>
@@ -1217,7 +1218,7 @@ const BrandManagement = () => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6">
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-[3rem] p-10 max-w-lg w-full relative">
               <button onClick={() => setIsEditing(false)} className="absolute top-8 right-8"><X size={24} /></button>
-              <h2 className="text-3xl font-black mb-8">Administrar Marca</h2>
+              <h2 className="text-3xl font-black mb-8">{t('adminManageBrand')}</h2>
               <form onSubmit={handleSave} className="space-y-6">
                 <input placeholder="Nombre de la marca" required className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium" value={currentBrand.name || ''} onChange={e => setCurrentBrand({ ...currentBrand, name: e.target.value })} />
                 <input placeholder="Nombre de la marca" required className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium" value={currentBrand.name || ''} onChange={e => setCurrentBrand({ ...currentBrand, name: e.target.value })} />
@@ -1228,7 +1229,7 @@ const BrandManagement = () => {
                 />
                 <textarea placeholder="Breve descripción..." className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium" value={currentBrand.description || ''} onChange={e => setCurrentBrand({ ...currentBrand, description: e.target.value })} />
                 <textarea placeholder="Breve descripción..." className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium" value={currentBrand.description || ''} onChange={e => setCurrentBrand({ ...currentBrand, description: e.target.value })} />
-                <button type="submit" className="w-full py-5 bg-blue-900 text-white rounded-2xl font-black shadow-xl shadow-blue-900/20">Guardar Marca</button>
+                <button type="submit" className="w-full py-5 bg-blue-900 text-white rounded-2xl font-black shadow-xl shadow-blue-900/20">{t('adminSaveBrand')}</button>
               </form>
             </motion.div>
           </motion.div>
@@ -1292,7 +1293,7 @@ const ProductManagement = () => {
   return (
     <div className="space-y-10">
       <div className="flex justify-between items-center">
-        <div><h1 className="text-3xl font-black text-slate-900">Gestión de Catálogo</h1></div>
+        <div><h1 className="text-3xl font-black text-slate-900">{t('adminCatalogManagement')}</h1></div>
         <button onClick={() => { setCurrentProduct({ brandId: brands[0]?.id || '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '', price: 0 }); setIsEditing(true); }}
           className="flex items-center gap-3 px-8 py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20"
         >
@@ -1617,7 +1618,7 @@ const ProspectManagement = () => {
                         </span>
                       )}
                       {!('role' in selectedItem) && (
-                        <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-green-100 text-green-700">Prospecto</span>
+                        <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-green-100 text-green-700">{t('labelProspect')}</span>
                       )}
                     </>
                   )}
@@ -1820,27 +1821,27 @@ const LoginPage = () => {
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md w-full">
         <div className="text-center mb-10">
           <div className="bg-blue-900 p-4 rounded-3xl inline-block mb-8 shadow-2xl shadow-blue-900/30"><Shield className="text-white" size={32} /></div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Acceso <span className="text-blue-600">Backoffice.</span></h1>
-          <p className="text-slate-500 mt-2 font-medium">Gestión integral de Istmo Global</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight">{t('loginTitle')}</h1>
+          <p className="text-slate-500 mt-2 font-medium">{t('loginSubtitle')}</p>
         </div>
         <div className="bg-white p-10 rounded-[3rem] shadow-3xl border border-slate-100">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Email</label>
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-1">{t('loginEmail')}</label>
               <input type="email" placeholder="tu@email.com" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-4 focus:ring-blue-900/5 transition-all font-medium"
                 value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Password</label>
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-1">{t('loginPassword')}</label>
               <input type="password" placeholder="••••••••" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-4 focus:ring-blue-900/5 transition-all font-medium"
                 value={pass} onChange={e => setPass(e.target.value)} required />
             </div>
-            {err && <div className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-lg">Credenciales inválidas.</div>}
-            <button type="submit" className="w-full py-5 bg-blue-900 text-white rounded-2xl font-black text-lg shadow-xl shadow-blue-900/30">Entrar Ahora</button>
+            {err && <div className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-lg">{t('loginInvalidCredentials')}</div>}
+            <button type="submit" className="w-full py-5 bg-blue-900 text-white rounded-2xl font-black text-lg shadow-xl shadow-blue-900/30">{t('loginEnter')}</button>
           </form>
         </div>
         <Link to="/" className="mt-10 block text-center text-slate-400 font-bold text-sm uppercase tracking-widest hover:text-blue-900 transition-colors flex items-center justify-center gap-2">
-          <ArrowRight className="rotate-180" size={16} /> Volver a la Web
+          <ArrowRight className="rotate-180" size={16} /> {t('loginBackToWeb')}
         </Link>
       </motion.div>
     </div>
@@ -1861,8 +1862,8 @@ const MarketsPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20">
           <FadeIn>
-            <h1 className="text-5xl md:text-6xl font-black text-slate-900 mb-6">Presencia Internacional</h1>
-            <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto">Istmo Global opera en centros estratégicos de comercio mundial.</p>
+            <h1 className="text-5xl md:text-6xl font-black text-slate-900 mb-6">{t('marketsTitle')}</h1>
+            <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto">{t('marketsSubtitle')}</p>
           </FadeIn>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">

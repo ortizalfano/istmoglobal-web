@@ -89,5 +89,90 @@ export const translations: Translation = {
   adminTotalProducts: { en: 'Total Products', es: 'Total Productos' },
   adminActiveProducts: { en: 'Active', es: 'Activos' },
   adminNewProspects: { en: 'New Leads (7d)', es: 'Nuevos Prospectos (7d)' },
-  adminLogout: { en: 'Logout', es: 'Cerrar Sesión' }
+  adminLogout: { en: 'Logout', es: 'Cerrar Sesión' },
+  adminBrandManagement: { en: 'Brand Management', es: 'Gestión de Marcas' },
+  adminNewBrand: { en: 'New Brand', es: 'Nueva Marca' },
+  adminManageBrand: { en: 'Manage Brand', es: 'Administrar Marca' },
+  adminSaveBrand: { en: 'Save Brand', es: 'Guardar Marca' },
+  adminCatalogManagement: { en: 'Catalog Management', es: 'Gestión de Catálogo' },
+  adminCategoryManagement: { en: 'Category Management', es: 'Gestión de Categorías' },
+  adminEditInfo: { en: 'Edit Information', es: 'Editar Información' },
+  adminViewDetail: { en: 'View Details', es: 'Ver Detalle' },
+
+  // Cart
+  cartTitle: { en: 'Your Order', es: 'Tu Pedido' },
+  cartEmpty: { en: 'No products in cart.', es: 'No hay productos en el carrito.' },
+  cartEstimatedTotal: { en: 'Estimated Total', es: 'Total Estimado' },
+  cartCheckout: { en: 'Checkout', es: 'Finalizar Pedido' },
+
+  // User Roles
+  roleWholesale: { en: 'Wholesale', es: 'Mayorista' },
+  roleCustomer: { en: 'Customer', es: 'Cliente' },
+  roleAdmin: { en: 'Admin', es: 'Admin' },
+
+  // Common Actions
+  btnLogout: { en: 'Logout', es: 'Cerrar Sesión' },
+  btnSave: { en: 'Save', es: 'Guardar' },
+  btnEdit: { en: 'Edit', es: 'Editar' },
+  btnDelete: { en: 'Delete', es: 'Eliminar' },
+  btnCancel: { en: 'Cancel', es: 'Cancelar' },
+  btnClearFilters: { en: 'Clear Filters', es: 'Borrar Filtros' },
+  btnViewDetails: { en: 'View Details', es: 'Ver Detalle' },
+  btnViewProducts: { en: 'View Products', es: 'Ver Productos' },
+
+  // Hero
+  heroOperations: { en: 'Global Trade Operations', es: 'Operaciones de Comercio Global' },
+  heroTrading: { en: 'Trading', es: 'Trading de' },
+  heroPossibilities: { en: 'Possibilities.', es: 'Posibilidades.' },
+  heroDescription: { en: 'Strategic import & export of high-quality tires across USA, Spain, Cuba, and Panama.', es: 'Importación y exportación estratégica de neumáticos de alta calidad en EE. UU., España, Cuba y Panamá.' },
+
+  // Catalog
+  catalogOurCatalog: { en: 'Our Catalog', es: 'Nuestro Catálogo' },
+  catalogOurBrands: { en: 'Our Brands', es: 'Nuestras Marcas' },
+  priceInquire: { en: 'Inquire', es: 'Consultar' },
+
+  // About
+  aboutMission: { en: 'Our Mission', es: 'Nuestra Misión' },
+  aboutVision: { en: 'Our Vision', es: 'Nuestra Visión' },
+  aboutGlobalPartners: { en: 'Global Partners', es: 'Socios Globales' },
+  aboutUnitsAnnually: { en: 'Units Moved Annually', es: 'Unidades Movidas Anualmente' },
+
+  // Contact
+  contactPrimaryEmail: { en: 'Primary Email', es: 'Email Principal' },
+
+  // Form Fields
+  fieldFullName: { en: 'Full Name', es: 'Nombre Completo' },
+  fieldCompany: { en: 'Company', es: 'Empresa' },
+  fieldTaxId: { en: 'Tax ID', es: 'RUC / ID Fiscal' },
+  fieldRegistrationDate: { en: 'Registration Date', es: 'Fecha de Registro' },
+  fieldPhone: { en: 'Phone', es: 'Teléfono' },
+  fieldCityCountry: { en: 'City / Country', es: 'Ciudad / País' },
+  fieldAddress: { en: 'Address', es: 'Dirección' },
+  fieldInterest: { en: 'Interest', es: 'Interés' },
+  fieldMessage: { en: 'Message', es: 'Mensaje' },
+
+  // Labels
+  labelProspect: { en: 'Prospect', es: 'Prospecto' },
+  labelEmail: { en: 'Email', es: 'Email' },
+
+  // Login
+  loginTitle: { en: 'Backoffice Access.', es: 'Acceso Backoffice.' },
+  loginSubtitle: { en: 'Istmo Global Comprehensive Management', es: 'Gestión integral de Istmo Global' },
+  loginEnter: { en: 'Enter Now', es: 'Entrar Ahora' },
+  loginBackToWeb: { en: 'Back to Website', es: 'Volver a la Web' },
+  loginInvalidCredentials: { en: 'Invalid credentials.', es: 'Credenciales inválidas.' },
+  loginEmail: { en: 'Email', es: 'Email' },
+  loginPassword: { en: 'Password', es: 'Password' },
+
+  // Markets
+  marketsTitle: { en: 'International Presence', es: 'Presencia Internacional' },
+  marketsSubtitle: { en: 'Istmo Global operates in strategic trade centers worldwide.', es: 'Istmo Global opera en centros estratégicos de comercio mundial.' },
+
+  // Placeholders
+  placeholderBrandName: { en: 'Brand name', es: 'Nombre de la marca' },
+  placeholderDescription: { en: 'Brief description...', es: 'Breve descripción...' },
+  placeholderEmail: { en: 'your@email.com', es: 'tu@email.com' },
+
+  // Messages
+  msgNoRecords: { en: 'No records found', es: 'No hay registros encontrados' }
 };
