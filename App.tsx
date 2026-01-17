@@ -155,12 +155,12 @@ const Navbar = () => {
   return (
     <nav className="fixed w-full z-50 glass-nav border-b border-slate-200/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20 items-center">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="bg-blue-900 p-2 rounded-xl group-hover:rotate-12 transition-transform shadow-lg shadow-blue-900/20">
-              <Globe2 className="text-white" size={24} />
+        <div className="flex justify-between h-16 sm:h-20 items-center">
+          <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group">
+            <div className="bg-blue-900 p-1.5 sm:p-2 rounded-lg sm:rounded-xl group-hover:rotate-12 transition-transform shadow-lg shadow-blue-900/20">
+              <Globe2 className="text-white" size={18} />
             </div>
-            <span className="text-2xl font-extrabold text-blue-900 tracking-tighter">
+            <span className="text-lg sm:text-2xl font-extrabold text-blue-900 tracking-tighter">
               ISTMO<span className="text-blue-500">GLOBAL</span>
             </span>
           </Link>
