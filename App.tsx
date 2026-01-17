@@ -1801,6 +1801,39 @@ const ProspectManagement = () => {
   );
 };
 
+// Dashboard Component
+const DashboardHome = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [prospects, setProspects] = useState<Prospect[]>([]);
+
+  useEffect(() => {
+    fetchProducts().then(setProducts);
+    fetchCategories().then(setCategories);
+    fetchProspects().then(setProspects);
+  }, []);
+
+  return (
+    <div className="space-y-10">
+      <h1 className="text-4xl font-black">Panel de Control</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm">
+          <div className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Total Catálogo</div>
+          <div className="text-5xl font-black text-blue-900">{products.length}</div>
+        </div>
+        <div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm">
+          <div className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Total Categorías</div>
+          <div className="text-5xl font-black text-blue-500">{categories.length}</div>
+        </div>
+        <div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm">
+          <div className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Leads Activos</div>
+          <div className="text-5xl font-black text-green-500">{prospects.length}</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const LoginPage = () => {
   const { login } = useContext(AuthContext);
   const { t } = useContext(LanguageContext);
@@ -2098,7 +2131,7 @@ const App = () => {
                   <Route path="/signup" element={<SignupPage />} />
 
                   <Route path="/admin/login" element={<LoginPage />} />
-                  <Route path="/admin" element={<AdminLayout><div className="space-y-10"><h1 className="text-4xl font-black">Panel de Control</h1><div className="grid grid-cols-1 md:grid-cols-3 gap-8"><div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm"><div className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Total Catálogo</div><div className="text-5xl font-black text-blue-900">...</div></div><div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm"><div className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Total Categorías</div><div className="text-5xl font-black text-blue-500">...</div></div><div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm"><div className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Leads Activos</div><div className="text-5xl font-black text-green-500">...</div></div></div></div></AdminLayout>} />
+                  <Route path="/admin" element={<AdminLayout><DashboardHome /></AdminLayout>} />
                   <Route path="/admin/orders" element={<AdminLayout><AdminOrders /></AdminLayout>} />
                   <Route path="/admin/brands" element={<AdminLayout><BrandManagement /></AdminLayout>} />
                   <Route path="/admin/products" element={<AdminLayout><ProductManagement /></AdminLayout>} />
