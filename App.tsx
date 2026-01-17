@@ -16,6 +16,7 @@ import { getProducts, getProspects, saveProducts, saveProspects, addProspect, ge
 import { fetchBrands, fetchProducts, fetchCategories, createBrand, updateBrand, deleteBrand, createCategory, updateCategory, deleteCategory, createProduct, updateProduct, deleteProduct, loginUser, createUser, createOrder, fetchOrders, fetchUsers, fetchProspects, updateUser, deleteUser, updateProspect, deleteProspect } from './dataService';
 import { Order } from './types';
 import { CartProvider, useCart } from './CartContext';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 // Duplicate imports removed
 
 // --- Contexts ---
@@ -1806,17 +1807,71 @@ const DashboardHome = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [prospects, setProspects] = useState<Prospect[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
 
   useEffect(() => {
     fetchProducts().then(setProducts);
     fetchCategories().then(setCategories);
     fetchProspects().then(setProspects);
+    fetchOrders().then(setOrders);
+    fetchBrands().then(setBrands);
   }, []);
+
+  // Calculate new prospects (last 7 days)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const newProspects = prospects.filter(p => new Date(p.createdAt) >= sevenDaysAgo);
+
+  // Calculate top products from orders
+  const productSales: { [key: string]: number } = {};
+  orders.forEach(order => {
+    try {
+      const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+      if (Array.isArray(items)) {
+        items.forEach((item: any) => {
+          productSales[item.id] = (productSales[item.id] || 0) + (item.quantity || 1);
+        });
+      }
+    } catch (e) {
+      // Skip invalid items
+    }
+  });
+
+  const topProducts = Object.entries(productSales)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([productId, count]) => ({
+      product: products.find(p => p.id === productId),
+      count
+    }))
+    .filter(item => item.product);
+
+  // Prepare sales chart data (last 6 months)
+  const salesByMonth: { [key: string]: number } = {};
+  const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+  orders.forEach(order => {
+    const date = new Date(order.createdAt);
+    const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    salesByMonth[monthKey] = (salesByMonth[monthKey] || 0) + (order.total || 0);
+  });
+
+  const chartData = Object.entries(salesByMonth)
+    .slice(-6)
+    .map(([month, total]) => ({ month, total: Math.round(total) }));
+
+  // Last 5 orders
+  const recentOrders = [...orders]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
 
   return (
     <div className="space-y-10">
       <h1 className="text-4xl font-black">Panel de Control</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm">
           <div className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Total Catálogo</div>
           <div className="text-5xl font-black text-blue-900">{products.length}</div>
@@ -1829,7 +1884,94 @@ const DashboardHome = () => {
           <div className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Leads Activos</div>
           <div className="text-5xl font-black text-green-500">{prospects.length}</div>
         </div>
+        <div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm">
+          <div className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Total Pedidos</div>
+          <div className="text-5xl font-black text-orange-500">{orders.length}</div>
+        </div>
       </div>
+
+      {/* Sales Chart */}
+      {chartData.length > 0 && (
+        <div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm">
+          <h2 className="text-2xl font-black mb-6">Ventas por Mes</h2>
+          <LineChart width={1000} height={300} data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={3} />
+          </LineChart>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Orders */}
+        <div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm">
+          <h2 className="text-2xl font-black mb-6">Últimos 5 Pedidos</h2>
+          {recentOrders.length > 0 ? (
+            <div className="space-y-4">
+              {recentOrders.map(order => (
+                <div key={order.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
+                  <div>
+                    <div className="font-bold text-slate-900">{order.userEmail}</div>
+                    <div className="text-xs text-slate-400">{new Date(order.createdAt).toLocaleDateString()}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-black text-blue-900">${order.total?.toFixed(2)}</div>
+                    <div className="text-xs text-slate-400">{order.status}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-slate-400 py-10">No hay pedidos aún</div>
+          )}
+        </div>
+
+        {/* New Prospects */}
+        <div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm">
+          <h2 className="text-2xl font-black mb-6">Prospectos Nuevos (7 días)</h2>
+          {newProspects.length > 0 ? (
+            <div className="space-y-4">
+              {newProspects.slice(0, 5).map(prospect => (
+                <div key={prospect.id} className="flex justify-between items-center p-4 bg-green-50 rounded-2xl">
+                  <div>
+                    <div className="font-bold text-slate-900">{prospect.name}</div>
+                    <div className="text-xs text-slate-400">{prospect.email}</div>
+                  </div>
+                  <div className="text-xs text-slate-400">{new Date(prospect.createdAt).toLocaleDateString()}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-slate-400 py-10">No hay prospectos nuevos</div>
+          )}
+        </div>
+      </div>
+
+      {/* Top Products */}
+      {topProducts.length > 0 && (
+        <div className="bg-white p-10 rounded-[32px] border border-slate-200 shadow-sm">
+          <h2 className="text-2xl font-black mb-6">Productos Más Vendidos (Top 5)</h2>
+          <div className="space-y-4">
+            {topProducts.map(({ product, count }, index) => {
+              const brand = brands.find(b => b.id === product?.brandId);
+              return (
+                <div key={product?.id} className="flex justify-between items-center p-4 bg-blue-50 rounded-2xl">
+                  <div className="flex items-center gap-4">
+                    <div className="text-3xl font-black text-blue-900">#{index + 1}</div>
+                    <div>
+                      <div className="font-bold text-slate-900">{brand?.name || 'Unknown'} - {product?.size}</div>
+                      <div className="text-xs text-slate-400">{product?.description || 'No description'}</div>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-black text-blue-600">{count} vendidos</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
