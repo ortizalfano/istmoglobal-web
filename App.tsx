@@ -1800,6 +1800,7 @@ const ProspectManagement = () => {
 
 const LoginPage = () => {
   const { login } = useContext(AuthContext);
+  const { t } = useContext(LanguageContext);
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [err, setErr] = useState(false);
