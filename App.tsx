@@ -1079,6 +1079,7 @@ const ContactPage = () => {
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useContext(AuthContext);
+  const { t } = useContext(LanguageContext);
   const location = useLocation();
 
   if (!user || user.role !== 'admin') return <Navigate to="/admin/login" />;
@@ -1180,6 +1181,7 @@ const AdminOrders = () => {
 };
 
 const BrandManagement = () => {
+  const { t } = useContext(LanguageContext);
   const [brands, setBrands] = useState<Brand[]>([]);
 
   useEffect(() => {
@@ -1253,6 +1255,7 @@ const BrandManagement = () => {
 };
 
 const ProductManagement = () => {
+  const { t } = useContext(LanguageContext);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
