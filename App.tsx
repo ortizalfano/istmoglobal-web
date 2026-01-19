@@ -5,6 +5,7 @@ import {
   Menu, X, Search, ShoppingBag, ArrowRight, Instagram, Facebook,
   Globe2, Mail, Phone, MapPin, ChevronRight, Star, Truck, Shield,
   Zap, BarChart2, Users, Package, Settings, LogOut, Plus, Trash2,
+  AlertTriangle, // Added for deletion warning modal
   Edit, Filter, LayoutGrid, Award, ShoppingCart, MessageSquare, Edit3, CheckCircle, Minus, Trash,
   Ship, Container, Globe, Target, Activity, Lock // Added Lock icon
 } from 'lucide-react';
@@ -1188,6 +1189,7 @@ const AdminOrders = () => {
 const BrandManagement = () => {
   const { t } = useContext(LanguageContext);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [currentBrand, setCurrentBrand] = useState<Partial<Brand>>({});
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -1196,6 +1198,7 @@ const BrandManagement = () => {
 
   useEffect(() => {
     fetchBrands().then(setBrands);
+    fetchProducts().then(setProducts);
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -1296,27 +1299,53 @@ const BrandManagement = () => {
       <AnimatePresence>
         {deleteModalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={cancelDelete}>
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[2.5rem] p-8 max-w-md w-full relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[2.5rem] p-8 max-w-lg w-full relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Trash2 size={32} className="text-red-500" />
-                </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-2">¿Eliminar esta marca?</h3>
-                <p className="text-slate-500 font-medium">Esta acción no se puede deshacer. La marca será eliminada permanentemente de la base de datos.</p>
+                {products.filter(p => p.brandId === brandToDelete).length > 0 ? (
+                  <>
+                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <AlertTriangle size={32} className="text-amber-500" />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 mb-2">No se puede eliminar</h3>
+                    <p className="text-slate-500 font-medium mb-4">
+                      Esta marca tiene productos asociados. Debes eliminarlos o reasignarlos antes de borrar la marca:
+                    </p>
+                    <div className="bg-slate-50 rounded-2xl p-4 text-left max-h-40 overflow-y-auto border border-slate-100 mb-2">
+                      <ul className="space-y-2">
+                        {products.filter(p => p.brandId === brandToDelete).map(p => (
+                          <li key={p.id} className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                            {p.size}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Trash2 size={32} className="text-red-500" />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 mb-2">¿Eliminar esta marca?</h3>
+                    <p className="text-slate-500 font-medium font-bold">Esta marca no tiene productos asociados y puede ser eliminada. Esta acción no se puede deshacer.</p>
+                  </>
+                )}
               </div>
               <div className="flex gap-4">
                 <button
                   onClick={cancelDelete}
-                  className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+                  className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all font-bold"
                 >
-                  Cancelar
+                  {products.filter(p => p.brandId === brandToDelete).length > 0 ? 'Entendido' : 'Cancelar'}
                 </button>
-                <button
-                  onClick={confirmDelete}
-                  className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-all shadow-xl shadow-red-500/20"
-                >
-                  Eliminar
-                </button>
+                {products.filter(p => p.brandId === brandToDelete).length === 0 && (
+                  <button
+                    onClick={confirmDelete}
+                    className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-all shadow-xl shadow-red-500/20 font-bold"
+                  >
+                    Eliminar
+                  </button>
+                )}
               </div>
             </motion.div>
           </motion.div>
