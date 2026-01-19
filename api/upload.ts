@@ -3,14 +3,22 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Initialize S3 Client for Cloudflare R2
 const R2 = new S3Client({
-    region: 'auto',
+    region: 'us-east-1', // R2 requires a region, us-east-1 is the standard fallback
     endpoint: `https://${process.env.R2_ACCOUNT_ID?.trim()}.r2.cloudflarestorage.com`,
     credentials: {
         accessKeyId: process.env.R2_ACCESS_KEY_ID?.trim() || '',
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY?.trim() || '',
     },
-    forcePathStyle: true,
+    // Removing forcePathStyle: true as it can cause Access Denied on some R2 configurations
 });
+
+console.log('R2 Config:', {
+    hasAccountId: !!process.env.R2_ACCOUNT_ID,
+    hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
+    hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
+    bucket: process.env.R2_BUCKET_NAME
+});
+
 
 
 export const config = {
