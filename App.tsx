@@ -1224,13 +1224,11 @@ const BrandManagement = () => {
               <h2 className="text-3xl font-black mb-8">{t('adminManageBrand')}</h2>
               <form onSubmit={handleSave} className="space-y-6">
                 <input placeholder="Nombre de la marca" required className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium" value={currentBrand.name || ''} onChange={e => setCurrentBrand({ ...currentBrand, name: e.target.value })} />
-                <input placeholder="Nombre de la marca" required className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium" value={currentBrand.name || ''} onChange={e => setCurrentBrand({ ...currentBrand, name: e.target.value })} />
                 <ImageUpload
                   currentImage={currentBrand.image}
                   onImageUploaded={(url) => setCurrentBrand(prev => ({ ...prev, image: url }))}
                   label="Logo de la Marca"
                 />
-                <textarea placeholder="Breve descripción..." className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium" value={currentBrand.description || ''} onChange={e => setCurrentBrand({ ...currentBrand, description: e.target.value })} />
                 <textarea placeholder="Breve descripción..." className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium" value={currentBrand.description || ''} onChange={e => setCurrentBrand({ ...currentBrand, description: e.target.value })} />
                 <button type="submit" className="w-full py-5 bg-blue-900 text-white rounded-2xl font-black shadow-xl shadow-blue-900/20">{t('adminSaveBrand')}</button>
               </form>
