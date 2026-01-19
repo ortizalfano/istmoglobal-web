@@ -6,7 +6,7 @@ import {
   Globe2, Mail, Phone, MapPin, ChevronRight, Star, Truck, Shield,
   Zap, BarChart2, Users, Package, Settings, LogOut, Plus, Trash2,
   AlertTriangle, // Added for deletion warning modal
-  Edit, Filter, LayoutGrid, Award, ShoppingCart, MessageSquare, Edit3, CheckCircle, Minus, Trash,
+  Edit, Filter, LayoutGrid, Award, ShoppingCart, MessageSquare, Edit3, CheckCircle, Minus, Trash, List,
   Ship, Container, Globe, Target, Activity, Lock // Added Lock icon
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
@@ -1428,6 +1428,7 @@ const ProductManagement = () => {
   const [currentProduct, setCurrentProduct] = useState<Partial<Product>>({ brandId: brands[0]?.id || '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '' });
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   const handleDeleteClick = (id: string) => {
     setProductToDelete(id);
@@ -1467,8 +1468,26 @@ const ProductManagement = () => {
 
   return (
     <div className="space-y-10">
-      <div className="flex justify-between items-center">
-        <div><h1 className="text-3xl font-black text-slate-900">{t('adminCatalogManagement')}</h1></div>
+      <div className="flex justify-between items-center bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-6">
+          <h1 className="text-3xl font-black text-slate-900">{t('adminCatalogManagement')}</h1>
+          <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-blue-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+              title="Vista Cuadrícula"
+            >
+              <LayoutGrid size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white text-blue-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+              title="Vista Tabla"
+            >
+              <List size={20} />
+            </button>
+          </div>
+        </div>
         <button onClick={() => { setCurrentProduct({ brandId: brands[0]?.id || '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '', price: 0 }); setIsEditing(true); }}
           className="flex items-center gap-3 px-8 py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20"
         >
@@ -1575,26 +1594,75 @@ const ProductManagement = () => {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
-        {products.map(p => (
-          <div key={p.id} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 group">
-            <div className="flex items-center gap-5 mb-6">
-              <img src={p.image} className="w-20 h-20 rounded-2xl object-cover shadow-inner" />
-              <div>
-                <h3 className="text-xl font-black text-slate-900">{brands.find(b => b.id === p.brandId)?.name || 'Unknown'}</h3>
-                <p className="text-slate-400 font-bold text-sm uppercase tracking-tighter">{p.size}</p>
-                <p className="text-blue-600 font-bold text-lg mt-1">${p.price?.toFixed(2) || '0.00'}</p>
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
+          {products.map(p => (
+            <motion.div layout key={p.id} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 group hover:shadow-xl transition-all duration-500">
+              <div className="flex items-center gap-5 mb-6">
+                <div className="relative group/img overflow-hidden rounded-2xl">
+                  <img src={p.image} className="w-24 h-24 object-cover shadow-inner transition-transform duration-700 group-hover/img:scale-110" />
+                  <div className={`absolute top-2 right-2 w-3 h-3 rounded-full border-2 border-white shadow-sm ${p.status === 'Active' ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 leading-tight">{brands.find(b => b.id === p.brandId)?.name || 'Unknown'}</h3>
+                  <p className="text-slate-400 font-bold text-sm uppercase tracking-tighter mt-1">{p.size}</p>
+                  <p className="text-blue-600 font-bold text-xl mt-2 tracking-tighter">${p.price?.toFixed(2) || '0.00'}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => handleEdit(p)} className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-blue-900 hover:text-white transition-all">
-                <Edit3 size={16} /> Editar
-              </button>
-              <button onClick={() => handleDeleteClick(p.id)} className="p-3 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={20} /></button>
-            </div>
-          </div>
-        ))}
-      </div>
+              <div className="flex gap-3">
+                <button onClick={() => handleEdit(p)} className="flex-1 py-4 rounded-xl bg-slate-50 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-blue-900 hover:text-white transition-all">
+                  <Edit3 size={18} /> Editar
+                </button>
+                <button onClick={() => handleDeleteClick(p.id)} className="p-4 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={20} /></button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm mb-12">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="p-6 font-bold text-slate-400 text-xs uppercase tracking-widest whitespace-nowrap">Producto / Marca</th>
+                <th className="p-6 font-bold text-slate-400 text-xs uppercase tracking-widest whitespace-nowrap">Medida</th>
+                <th className="p-6 font-bold text-slate-400 text-xs uppercase tracking-widest whitespace-nowrap">Categoría</th>
+                <th className="p-6 font-bold text-slate-400 text-xs uppercase tracking-widest whitespace-nowrap">Precio</th>
+                <th className="p-6 font-bold text-slate-400 text-xs uppercase tracking-widest whitespace-nowrap">Estado</th>
+                <th className="p-6 font-bold text-slate-400 text-xs uppercase tracking-widest text-right whitespace-nowrap">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {products.map(p => (
+                <tr key={p.id} className="hover:bg-slate-50 transition-colors group">
+                  <td className="p-6">
+                    <div className="flex items-center gap-4">
+                      <img src={p.image} className="w-12 h-12 rounded-xl object-cover shadow-sm" />
+                      <div>
+                        <div className="font-black text-slate-900">{brands.find(b => b.id === p.brandId)?.name || 'Unknown'}</div>
+                        <div className="text-[10px] uppercase font-bold text-slate-400 tracking-tighter">ID: {p.id.slice(0, 8)}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-6 font-bold text-slate-700">{p.size}</td>
+                  <td className="p-6 font-medium text-slate-500">{categories.find(c => c.id === p.categoryId)?.name || 'N/A'}</td>
+                  <td className="p-6 font-black text-blue-900 tracking-tight">${p.price?.toFixed(2)}</td>
+                  <td className="p-6">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${p.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                      {p.status === 'Active' ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </td>
+                  <td className="p-6 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => handleEdit(p)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-100 hover:text-blue-600 transition-colors"><Edit size={16} /></button>
+                      <button onClick={() => handleDeleteClick(p.id)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors"><Trash size={16} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </motion.div>
+      )}
     </div>
   );
 };
