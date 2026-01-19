@@ -42,7 +42,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Convert base64 to buffer
-        const buffer = Buffer.from(fileData.split(',')[1], 'base64');
+        let buffer: Buffer;
+        try {
+            const base64Content = fileData.includes(',') ? fileData.split(',')[1] : fileData;
+            buffer = Buffer.from(base64Content, 'base64');
+        } catch (e) {
+            return res.status(400).json({ error: 'Invalid file data format' });
+        }
 
         const key = `uploads/${Date.now()}-${fileName}`;
 
@@ -63,8 +69,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.status(200).json({ publicUrl });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error uploading to R2:', error);
-        res.status(500).json({ error: 'Error uploading file' });
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.status(500).json({
+            error: 'Error uploading file',
+            details: error.message,
+            stack: error.stack
+        });
     }
 }
