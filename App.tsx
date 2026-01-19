@@ -1184,29 +1184,60 @@ const AdminOrders = () => {
 const BrandManagement = () => {
   const { t } = useContext(LanguageContext);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentBrand, setCurrentBrand] = useState<Partial<Brand>>({});
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [brandToDelete, setBrandToDelete] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchBrands().then(setBrands);
   }, []);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentBrand, setCurrentBrand] = useState<Partial<Brand>>({});
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentBrand.id) {
-      await updateBrand(currentBrand as Brand);
-    } else {
-      await createBrand(currentBrand as any);
+    setIsSaving(true);
+    try {
+      if (currentBrand.id) {
+        await updateBrand(currentBrand as Brand);
+      } else {
+        await createBrand(currentBrand as any);
+      }
+      const updatedBrands = await fetchBrands();
+      setBrands(updatedBrands);
+      setIsEditing(false);
+      setCurrentBrand({});
+    } catch (error) {
+      console.error('Error saving brand:', error);
+      alert('Error al guardar la marca. Por favor, intenta de nuevo.');
+    } finally {
+      setIsSaving(false);
     }
-    fetchBrands().then(setBrands);
-    setIsEditing(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Eliminar esta marca?')) {
-      await deleteBrand(id);
-      fetchBrands().then(setBrands);
+  const handleDeleteClick = (id: string) => {
+    setBrandToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (brandToDelete) {
+      try {
+        await deleteBrand(brandToDelete);
+        const updatedBrands = await fetchBrands();
+        setBrands(updatedBrands);
+        setDeleteModalOpen(false);
+        setBrandToDelete(null);
+      } catch (error) {
+        console.error('Error deleting brand:', error);
+        alert('Error al eliminar la marca. Por favor, intenta de nuevo.');
+      }
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setBrandToDelete(null);
   };
 
   return (
@@ -1216,22 +1247,73 @@ const BrandManagement = () => {
         <button onClick={() => { setCurrentBrand({ name: '', description: '', image: '' }); setIsEditing(true); }} className="px-8 py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20">{t('adminNewBrand')}</button>
       </div>
 
+      {/* Edit/Create Modal */}
       <AnimatePresence>
         {isEditing && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-[3rem] p-10 max-w-lg w-full relative">
-              <button onClick={() => setIsEditing(false)} className="absolute top-8 right-8"><X size={24} /></button>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={() => !isSaving && setIsEditing(false)}>
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white rounded-[3rem] p-10 max-w-lg w-full relative" onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => !isSaving && setIsEditing(false)} className="absolute top-8 right-8 hover:bg-slate-100 rounded-full p-2 transition-colors" disabled={isSaving}><X size={24} /></button>
               <h2 className="text-3xl font-black mb-8">{t('adminManageBrand')}</h2>
               <form onSubmit={handleSave} className="space-y-6">
-                <input placeholder="Nombre de la marca" required className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium" value={currentBrand.name || ''} onChange={e => setCurrentBrand({ ...currentBrand, name: e.target.value })} />
+                <input
+                  placeholder="Nombre de la marca"
+                  required
+                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium focus:border-blue-500 transition-colors"
+                  value={currentBrand.name || ''}
+                  onChange={e => setCurrentBrand({ ...currentBrand, name: e.target.value })}
+                  disabled={isSaving}
+                />
                 <ImageUpload
                   currentImage={currentBrand.image}
                   onImageUploaded={(url) => setCurrentBrand(prev => ({ ...prev, image: url }))}
                   label="Logo de la Marca"
                 />
-                <textarea placeholder="Breve descripción..." className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium" value={currentBrand.description || ''} onChange={e => setCurrentBrand({ ...currentBrand, description: e.target.value })} />
-                <button type="submit" className="w-full py-5 bg-blue-900 text-white rounded-2xl font-black shadow-xl shadow-blue-900/20">{t('adminSaveBrand')}</button>
+                <textarea
+                  placeholder="Breve descripción..."
+                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium focus:border-blue-500 transition-colors min-h-[100px]"
+                  value={currentBrand.description || ''}
+                  onChange={e => setCurrentBrand({ ...currentBrand, description: e.target.value })}
+                  disabled={isSaving}
+                />
+                <button
+                  type="submit"
+                  className="w-full py-5 bg-blue-900 text-white rounded-2xl font-black shadow-xl shadow-blue-900/20 hover:bg-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Guardando...' : t('adminSaveBrand')}
+                </button>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteModalOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={cancelDelete}>
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[2.5rem] p-8 max-w-md w-full relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={32} className="text-red-500" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">¿Eliminar esta marca?</h3>
+                <p className="text-slate-500 font-medium">Esta acción no se puede deshacer. La marca será eliminada permanentemente de la base de datos.</p>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={cancelDelete}
+                  className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-all shadow-xl shadow-red-500/20"
+                >
+                  Eliminar
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -1239,12 +1321,17 @@ const BrandManagement = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {brands.map(b => (
-          <div key={b.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <div key={b.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            {b.image && (
+              <div className="mb-4 flex items-center justify-center h-20">
+                <img src={b.image} alt={b.name} className="max-h-full max-w-full object-contain" />
+              </div>
+            )}
             <h3 className="text-2xl font-black mb-2 text-slate-900">{b.name}</h3>
             <p className="text-slate-500 text-sm mb-8 leading-relaxed">{b.description || 'Sin descripción.'}</p>
             <div className="flex gap-4">
               <button onClick={() => { setCurrentBrand(b); setIsEditing(true); }} className="flex-1 py-3 rounded-xl bg-slate-50 font-bold hover:bg-slate-900 hover:text-white transition-all">Editar</button>
-              <button onClick={() => handleDelete(b.id)} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={20} /></button>
+              <button onClick={() => handleDeleteClick(b.id)} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={20} /></button>
             </div>
           </div>
         ))}
