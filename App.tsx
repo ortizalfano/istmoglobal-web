@@ -40,23 +40,27 @@ const CartDrawer = () => {
   const { user } = useContext(AuthContext);
   const { t } = useContext(LanguageContext);
   const navigate = useNavigate();
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   if (!isOpen) return null;
 
+  const handleWhatsAppGuest = () => {
+    const message = `*Nueva Orden de Pedido (Invitado)*\\n\\n` +
+      items.map(i => `- ${i.quantity}x ${i.size} (${i.price ? '$' + i.price : 'Consultar'})`).join('\\n') +
+      `\\n\\n*Total Estimado: $${total.toFixed(2)}*`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    setShowLoginPrompt(false);
+  };
+
+  const handleGoToLogin = () => {
+    setIsOpen(false);
+    setShowLoginPrompt(false);
+    navigate('/login');
+  };
+
   const handleCheckout = async () => {
     if (!user) {
-      // Option: Redirect to login or allow WhatsApp for guests
-      // For now, let's suggest login
-      if (confirm("Para procesar tu pedido y tener seguimiento, por favor inicia sesión. ¿Ir al login?")) {
-        setIsOpen(false);
-        navigate('/login');
-      } else {
-        // Fallback to WhatsApp
-        const message = `*Nueva Orden de Pedido (Invitado)*\n\n` +
-          items.map(i => `- ${i.quantity}x ${i.size} (${i.price ? '$' + i.price : 'Consultar'})`).join('\n') +
-          `\n\n*Total Estimado: $${total.toFixed(2)}*`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-      }
+      setShowLoginPrompt(true);
       return;
     }
 
@@ -74,7 +78,7 @@ const CartDrawer = () => {
     alert("¡Pedido realizado con éxito! Un agente te contactará pronto.");
   };
 
-  return (
+  <>
     <div className="fixed inset-0 z-[60] flex justify-end">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
       <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col p-6 animate-in slide-in-from-right duration-300">
@@ -116,7 +120,44 @@ const CartDrawer = () => {
         </div>
       </div>
     </div>
-  );
+
+    {/* Login Prompt Modal */}
+    <AnimatePresence>
+      {showLoginPrompt && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[70] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={() => setShowLoginPrompt(false)}>
+          <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[2.5rem] p-10 max-w-md w-full relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock size={32} className="text-blue-900" />
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 mb-2">Inicia Sesión</h3>
+              <p className="text-slate-500 font-medium font-bold">Para procesar tu pedido y tener un seguimiento detallado, te sugerimos iniciar sesión como cliente.</p>
+            </div>
+            <div className="space-y-4">
+              <button
+                onClick={handleGoToLogin}
+                className="w-full py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20 font-bold flex items-center justify-center gap-2"
+              >
+                Ir al Login <ArrowRight size={18} />
+              </button>
+              <button
+                onClick={handleWhatsAppGuest}
+                className="w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all font-bold"
+              >
+                Continuar por WhatsApp (Sin registro)
+              </button>
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="w-full text-slate-400 text-sm font-bold hover:text-slate-600 transition-colors pt-2"
+              >
+                Seguir Comprando
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </>
 };
 
 const FadeIn: React.FC<{ children?: React.ReactNode; delay?: number }> = ({ children, delay = 0 }) => (
@@ -1299,7 +1340,7 @@ const BrandManagement = () => {
       <AnimatePresence>
         {deleteModalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={cancelDelete}>
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[2.5rem] p-8 max-w-lg w-full relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[2.5rem] p-8 max-w-md w-full relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="text-center mb-8">
                 {products.filter(p => p.brandId === brandToDelete).length > 0 ? (
                   <>
@@ -1385,6 +1426,26 @@ const ProductManagement = () => {
   }, []);
   const [isEditing, setIsEditing] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Partial<Product>>({ brandId: brands[0]?.id || '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '' });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+
+  const handleDeleteClick = (id: string) => {
+    setProductToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setProductToDelete(null);
+  };
+
+  const confirmDelete = async () => {
+    if (productToDelete) {
+      await deleteProduct(productToDelete);
+      fetchProducts().then(setProducts);
+      cancelDelete();
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1401,13 +1462,6 @@ const ProductManagement = () => {
   };
 
   const handleEdit = (p: Product) => { setCurrentProduct(p); setIsEditing(true); };
-
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Eliminar este producto?')) {
-      await deleteProduct(id);
-      fetchProducts().then(setProducts);
-    }
-  };
 
   const [isPriceFocused, setIsPriceFocused] = useState(false);
 
@@ -1490,6 +1544,37 @@ const ProductManagement = () => {
         )}
       </AnimatePresence>
 
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteModalOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={cancelDelete}>
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[2.5rem] p-8 max-w-md w-full relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={32} className="text-red-500" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">¿Eliminar este producto?</h3>
+                <p className="text-slate-500 font-medium font-bold">Esta acción no se puede deshacer. El producto será eliminado permanentemente de la base de datos.</p>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={cancelDelete}
+                  className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all font-bold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-all shadow-xl shadow-red-500/20 font-bold"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
         {products.map(p => (
           <div key={p.id} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 group">
@@ -1505,7 +1590,7 @@ const ProductManagement = () => {
               <button onClick={() => handleEdit(p)} className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-blue-900 hover:text-white transition-all">
                 <Edit3 size={16} /> Editar
               </button>
-              <button onClick={() => handleDelete(p.id)} className="p-3 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={20} /></button>
+              <button onClick={() => handleDeleteClick(p.id)} className="p-3 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={20} /></button>
             </div>
           </div>
         ))}
@@ -1522,6 +1607,26 @@ const CategoryManagement = () => {
   }, []);
   const [isEditing, setIsEditing] = useState(false);
   const [current, setCurrent] = useState<Partial<Category>>({ name: '', description: '' });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+
+  const handleDeleteClick = (id: string) => {
+    setCategoryToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setCategoryToDelete(null);
+  };
+
+  const confirmDelete = async () => {
+    if (categoryToDelete) {
+      await deleteCategory(categoryToDelete);
+      fetchCategories().then(setCategories);
+      cancelDelete();
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1534,12 +1639,6 @@ const CategoryManagement = () => {
     setIsEditing(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Eliminar esta categoría?')) {
-      await deleteCategory(id);
-      fetchCategories().then(setCategories);
-    }
-  };
 
   return (
     <div className="space-y-10">
@@ -1564,6 +1663,37 @@ const CategoryManagement = () => {
         )}
       </AnimatePresence>
 
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteModalOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={cancelDelete}>
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[2.5rem] p-8 max-w-md w-full relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={32} className="text-red-500" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">¿Eliminar esta categoría?</h3>
+                <p className="text-slate-500 font-medium font-bold">Esta acción no se puede deshacer. La categoría será eliminada permanentemente de la base de datos.</p>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={cancelDelete}
+                  className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all font-bold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-all shadow-xl shadow-red-500/20 font-bold"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {categories.map(c => (
           <div key={c.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
@@ -1571,7 +1701,7 @@ const CategoryManagement = () => {
             <p className="text-slate-500 text-sm mb-8 leading-relaxed">{c.description || 'Sin descripción.'}</p>
             <div className="flex gap-4">
               <button onClick={() => { setCurrent(c); setIsEditing(true); }} className="flex-1 py-3 rounded-xl bg-slate-50 font-bold hover:bg-slate-900 hover:text-white transition-all">Editar</button>
-              <button onClick={() => handleDelete(c.id)} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={20} /></button>
+              <button onClick={() => handleDeleteClick(c.id)} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={20} /></button>
             </div>
           </div>
         ))}
@@ -1588,6 +1718,31 @@ const ProspectManagement = () => {
   const [selectedItem, setSelectedItem] = useState<User | Prospect | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<any>({});
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<User | Prospect | null>(null);
+
+  const handleDeleteClick = (item: User | Prospect) => {
+    setItemToDelete(item);
+    setDeleteModalOpen(true);
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setItemToDelete(null);
+  };
+
+  const confirmDelete = async () => {
+    if (itemToDelete) {
+      if ('role' in itemToDelete) {
+        await deleteUser(itemToDelete.id);
+      } else {
+        await deleteProspect(itemToDelete.id);
+      }
+      refreshData();
+      closeDetail();
+      cancelDelete();
+    }
+  };
 
   const refreshData = () => {
     fetchProspects().then(setProspects);
@@ -1610,17 +1765,6 @@ const ProspectManagement = () => {
     setIsEditing(true);
   };
 
-  const handleDelete = async (item: User | Prospect) => {
-    if (confirm(`¿Estás seguro de que deseas eliminar a ${item.name}?`)) {
-      if ('role' in item) {
-        await deleteUser(item.id);
-      } else {
-        await deleteProspect(item.id);
-      }
-      refreshData();
-      closeDetail();
-    }
-  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1682,7 +1826,7 @@ const ProspectManagement = () => {
                   <td className="p-6 text-right">
                     <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
                       <button onClick={() => handleEdit(u)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-100 hover:text-blue-600 transition-colors"><Edit size={16} /></button>
-                      <button onClick={() => handleDelete(u)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors"><Trash size={16} /></button>
+                      <button onClick={() => handleDeleteClick(u)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors"><Trash size={16} /></button>
                     </div>
                   </td>
                 </tr>
@@ -1698,7 +1842,7 @@ const ProspectManagement = () => {
                   <td className="p-6 text-right">
                     <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
                       <button onClick={() => handleEdit(p)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-100 hover:text-blue-600 transition-colors"><Edit size={16} /></button>
-                      <button onClick={() => handleDelete(p)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors"><Trash size={16} /></button>
+                      <button onClick={() => handleDeleteClick(p)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors"><Trash size={16} /></button>
                     </div>
                   </td>
                 </tr>
@@ -1894,7 +2038,7 @@ const ProspectManagement = () => {
                         <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-blue-100 hover:text-blue-600 transition-all">
                           <Edit size={18} /> Editar
                         </button>
-                        <button onClick={() => handleDelete(selectedItem)} className="flex items-center gap-2 px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-red-100 hover:text-red-600 transition-all">
+                        <button onClick={() => handleDeleteClick(selectedItem)} className="flex items-center gap-2 px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-red-100 hover:text-red-600 transition-all">
                           <Trash size={18} /> Eliminar
                         </button>
                       </div>
@@ -1911,6 +2055,37 @@ const ProspectManagement = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteModalOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={cancelDelete}>
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[2.5rem] p-8 max-w-md w-full relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={32} className="text-red-500" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">¿Eliminar registro?</h3>
+                <p className="text-slate-500 font-medium font-bold">¿Estás seguro de que deseas eliminar a <b>{itemToDelete?.name}</b>? Esta acción no se puede deshacer.</p>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={cancelDelete}
+                  className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all font-bold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-all shadow-xl shadow-red-500/20 font-bold"
+                >
+                  Eliminar
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -2316,6 +2491,7 @@ const ClientLoginPage = () => {
           </div>
         </form>
       </div>
+
     </div>
   );
 };
