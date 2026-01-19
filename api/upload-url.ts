@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Initialize S3 Client for Cloudflare R2
 const R2 = new S3Client({
@@ -11,7 +12,13 @@ const R2 = new S3Client({
     },
 });
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+
     // Only allow GET requests
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -28,16 +35,15 @@ export default async function handler(req: any, res: any) {
         const command = new PutObjectCommand({
             Bucket: process.env.R2_BUCKET_NAME,
             Key: key,
-            ContentType: fileType,
+            ContentType: fileType as string,
         });
 
         const uploadUrl = await getSignedUrl(R2, command, { expiresIn: 3600 });
 
-        // Construct public URL (assuming public access is enabled on the bucket or via custom domain)
-        // If user provided a custom domain, use it. Otherwise fall back to R2 dev URL logic if possible or just the raw key.
+        // Construct public URL
         const publicUrl = process.env.R2_PUBLIC_URL
             ? `${process.env.R2_PUBLIC_URL}/${key}`
-            : `https://${process.env.R2_BUCKET_NAME}.r2.dev/${key}`; // Default R2.dev structure
+            : `https://${process.env.R2_BUCKET_NAME}.r2.dev/${key}`;
 
         res.status(200).json({ uploadUrl, publicUrl });
     } catch (error) {
