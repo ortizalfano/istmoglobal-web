@@ -272,6 +272,7 @@ const Footer = () => {
 // --- Components: Public ---
 
 const ProductDetailModal = ({ product, isOpen, onClose }: { product: Product | null, isOpen: boolean, onClose: () => void }) => {
+  const { t } = useContext(LanguageContext);
   const { addToCart } = useCart();
   const { user } = useContext(AuthContext);
   const [quantity, setQuantity] = useState(1);
@@ -425,7 +426,7 @@ const FeaturedBrands = () => {
                   <img
                     src={brand.image}
                     alt={brand.name}
-                    className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-500 opacity-60 group-hover:opacity-100 group-hover:scale-110"
+                    className="w-full h-full object-contain rounded-2xl filter grayscale group-hover:grayscale-0 transition-all duration-500 opacity-60 group-hover:opacity-100 group-hover:scale-110"
                   />
                 ) : (
                   <span className="text-xl font-black text-slate-300 group-hover:text-blue-900 transition-colors uppercase">{brand.name}</span>
@@ -1126,6 +1127,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 // --- Admin Pages ---
 
 const AdminOrders = () => {
+  const { t } = useContext(LanguageContext);
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
@@ -1324,7 +1326,7 @@ const BrandManagement = () => {
           <div key={b.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
             {b.image && (
               <div className="mb-4 flex items-center justify-center h-20">
-                <img src={b.image} alt={b.name} className="max-h-full max-w-full object-contain" />
+                <img src={b.image} alt={b.name} className="max-h-full max-w-full object-contain rounded-xl" />
               </div>
             )}
             <h3 className="text-2xl font-black mb-2 text-slate-900">{b.name}</h3>
@@ -1549,6 +1551,7 @@ const CategoryManagement = () => {
 };
 
 const ProspectManagement = () => {
+  const { t } = useContext(LanguageContext);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [activeTab, setActiveTab] = useState<'prospects' | 'users'>('users');

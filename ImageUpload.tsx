@@ -28,11 +28,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ currentImage, onImageUploaded
                 useWebWorker: true,
             };
 
-            console.log(`Original size: ${file.size / 1024 / 1024} MB`);
             const compressedFile = await imageCompression(file, options);
-            console.log(`Compressed size: ${compressedFile.size / 1024 / 1024} MB`);
 
             // 2. Convert to base64
+
             const reader = new FileReader();
             const fileData = await new Promise<string>((resolve, reject) => {
                 reader.onload = () => resolve(reader.result as string);

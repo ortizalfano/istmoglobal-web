@@ -11,12 +11,7 @@ const R2 = new S3Client({
     },
 });
 
-console.log('R2 Config Debug:', {
-    endpoint: `https://${process.env.R2_ACCOUNT_ID?.trim()}.r2.cloudflarestorage.com`,
-    bucket: process.env.R2_BUCKET_NAME,
-    accessKeyMasked: process.env.R2_ACCESS_KEY_ID ? `${process.env.R2_ACCESS_KEY_ID.slice(0, 4)}...` : 'MISSING',
-    secretKeyMasked: process.env.R2_SECRET_ACCESS_KEY ? 'PROVIDED' : 'MISSING'
-});
+
 
 
 
@@ -80,7 +75,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.status(200).json({ publicUrl });
     } catch (error: any) {
-        console.error('Error uploading to R2:', error);
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.status(500).json({
             error: 'Error uploading file',
