@@ -422,15 +422,17 @@ const FeaturedBrands = () => {
                 onClick={() => navigate('/catalog')}
                 className="group relative aspect-square bg-slate-50 rounded-3xl flex items-center justify-center p-6 cursor-pointer hover:shadow-xl transition-all duration-300 border border-slate-100"
               >
-                {brand.image ? (
-                  <img
-                    src={brand.image}
-                    alt={brand.name}
-                    className="w-full h-full object-contain rounded-2xl filter grayscale group-hover:grayscale-0 transition-all duration-500 opacity-60 group-hover:opacity-100 group-hover:scale-110"
-                  />
-                ) : (
-                  <span className="text-xl font-black text-slate-300 group-hover:text-blue-900 transition-colors uppercase">{brand.name}</span>
-                )}
+                <div className="w-full h-full flex items-center justify-center p-6 rounded-[inherit] overflow-hidden">
+                  {brand.image ? (
+                    <img
+                      src={brand.image}
+                      alt={brand.name}
+                      className="max-w-full max-h-full object-contain rounded-2xl filter grayscale group-hover:grayscale-0 transition-all duration-500 opacity-60 group-hover:opacity-100 group-hover:scale-110"
+                    />
+                  ) : (
+                    <span className="text-xl font-black text-slate-300 group-hover:text-blue-900 transition-colors uppercase">{brand.name}</span>
+                  )}
+                </div>
                 <div className="absolute inset-x-0 bottom-4 text-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">{t('btnViewProducts')}</span>
                 </div>
@@ -1323,12 +1325,11 @@ const BrandManagement = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {brands.map(b => (
-          <div key={b.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-            {b.image && (
-              <div className="mb-4 flex items-center justify-center h-20">
-                <img src={b.image} alt={b.name} className="max-h-full max-w-full object-contain rounded-xl" />
-              </div>
-            )}
+          <div key={b.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div className="mb-4 flex items-center justify-center h-24 bg-slate-50 rounded-2xl overflow-hidden p-2">
+              <img src={b.image} alt={b.name} className="max-h-full max-w-full object-contain rounded-xl" />
+            </div>
+
             <h3 className="text-2xl font-black mb-2 text-slate-900">{b.name}</h3>
             <p className="text-slate-500 text-sm mb-8 leading-relaxed">{b.description || 'Sin descripción.'}</p>
             <div className="flex gap-4">
