@@ -29,7 +29,6 @@ export default async function handler(req: any, res: any) {
             Bucket: process.env.R2_BUCKET_NAME,
             Key: key,
             ContentType: fileType,
-            ACL: 'public-read', // Depends on bucket settings, but good request usually
         });
 
         const uploadUrl = await getSignedUrl(R2, command, { expiresIn: 3600 });

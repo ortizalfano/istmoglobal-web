@@ -1,10 +1,7 @@
 [
     {
         "AllowedOrigins": [
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "https://istmo-web.vercel.app",
-            "https://*.vercel.app"
+            "*"
         ],
         "AllowedMethods": [
             "GET",
@@ -17,7 +14,8 @@
             "*"
         ],
         "ExposeHeaders": [
-            "ETag"
+            "ETag",
+            "Content-Length"
         ],
         "MaxAgeSeconds": 3600
     }
