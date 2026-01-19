@@ -23,8 +23,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ currentImage, onImageUploaded
         try {
             // 1. Compress Image
             const options = {
-                maxSizeMB: 1, // Max size 1MB
-                maxWidthOrHeight: 1920,
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1024,
                 useWebWorker: true,
             };
 
@@ -32,22 +32,30 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ currentImage, onImageUploaded
             const compressedFile = await imageCompression(file, options);
             console.log(`Compressed size: ${compressedFile.size / 1024 / 1024} MB`);
 
-            // 2. Get Presigned URL
-            const res = await fetch(`/api/upload-url?fileName=${encodeURIComponent(file.name)}&fileType=${encodeURIComponent(file.type)}`);
-            if (!res.ok) throw new Error('Failed to get upload URL');
-
-            const { uploadUrl, publicUrl } = await res.json();
-
-            // 3. Upload to R2
-            const uploadRes = await fetch(uploadUrl, {
-                method: 'PUT',
-                body: compressedFile,
-                headers: {
-                    'Content-Type': file.type,
-                },
+            // 2. Convert to base64
+            const reader = new FileReader();
+            const fileData = await new Promise<string>((resolve, reject) => {
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(compressedFile);
             });
 
-            if (!uploadRes.ok) throw new Error('Failed to upload image to R2');
+            // 3. Upload via server
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fileName: file.name,
+                    fileType: file.type,
+                    fileData,
+                }),
+            });
+
+            if (!res.ok) throw new Error('Failed to upload image');
+
+            const { publicUrl } = await res.json();
 
             // 4. Update State
             setPreview(publicUrl);
@@ -61,6 +69,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ currentImage, onImageUploaded
             setUploading(false);
         }
     };
+
 
     const handleRemove = () => {
         setPreview(null);
