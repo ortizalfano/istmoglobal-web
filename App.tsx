@@ -852,6 +852,99 @@ const AboutPage = () => {
         </div>
       </section>
 
+      {/* Philosophy Section (New) */}
+      <section className="py-24 bg-white relative">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <FadeIn>
+            <div className="bg-slate-50 p-12 rounded-[3rem] border border-slate-100 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-blue-900"></div>
+              <h2 className="text-3xl font-black text-slate-900 mb-8">{t('philosophyTitle')}</h2>
+              <p className="text-lg text-slate-600 font-medium leading-relaxed italic">
+                "{t('philosophyText')}"
+              </p>
+              <div className="mt-8 flex justify-center">
+                <div className="flex -space-x-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-500">
+                      <Users size={16} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* Business Lines Section (New) */}
+      <section className="py-20 bg-slate-900 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center mb-16">
+            <FadeIn>
+              <h2 className="text-4xl font-black text-white mb-4">{t('businessLinesTitle')}</h2>
+              <div className="w-20 h-2 bg-blue-500 mx-auto rounded-full"></div>
+            </FadeIn>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Automotive */}
+            <FadeIn delay={0.1}>
+              <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 h-full hover:bg-slate-800/80 transition-colors">
+                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-blue-600/20">
+                  <Truck size={32} className="text-white" />
+                </div>
+                <h3 className="text-3xl font-black text-white mb-6">{t('automotiveTitle')}</h3>
+                <p className="text-slate-300 leading-relaxed mb-8">
+                  {t('automotiveText')}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {['Nissan', 'Kia', 'Hyundai', 'Toyota', 'Mitsubishi'].map(brand => (
+                    <span key={brand} className="px-4 py-2 bg-slate-900/50 rounded-full text-slate-400 text-xs font-bold uppercase tracking-wider border border-slate-700">
+                      {brand}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </FadeIn>
+
+            {/* Steel & Renewables */}
+            <FadeIn delay={0.2}>
+              <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 h-full hover:bg-slate-800/80 transition-colors">
+                <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-orange-500/20">
+                  <Container size={32} className="text-white" />
+                </div>
+                <h3 className="text-3xl font-black text-white mb-6">{t('steelTitle')}</h3>
+                <p className="text-slate-300 leading-relaxed">
+                  {t('steelText')}
+                </p>
+              </div>
+            </FadeIn>
+          </div>
+        </div>
+      </section>
+
+      {/* E-commerce Banner (New) */}
+      <section className="py-24 bg-blue-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?auto=format&fit=crop&w=1920&q=80')] opacity-10 bg-cover bg-center"></div>
+        <div className="max-w-5xl mx-auto px-4 relative z-10 text-center">
+          <FadeIn>
+            <div className="inline-block p-4 bg-blue-800/50 rounded-2xl border border-blue-700/50 backdrop-blur-sm mb-8">
+              <Globe2 size={32} className="text-blue-300" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-8 leading-tight">
+              {t('ecommerceTitle')}
+            </h2>
+            <p className="text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed font-medium mb-12">
+              {t('ecommerceText')}
+            </p>
+            <Link to="/catalog" className="inline-flex items-center gap-3 px-10 py-5 bg-white text-blue-900 rounded-2xl font-black text-lg hover:bg-blue-50 transition-all shadow-xl shadow-blue-900/50">
+              {t('btnViewCatalog')} <ArrowRight size={20} />
+            </Link>
+          </FadeIn>
+        </div>
+      </section>
+
       {/* Timeline Section */}
       <section className="py-32 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4">
@@ -1085,6 +1178,23 @@ const ContactPage = () => {
             <h1 className="text-5xl font-black text-slate-900 mb-8">{t('contactTitle')}</h1>
             <p className="text-xl text-slate-600 mb-12 font-medium leading-relaxed">Conecta con nuestros expertos globales.</p>
             <div className="space-y-6">
+              <div className="bg-blue-50/50 p-8 rounded-[2rem] border border-blue-100 mb-8">
+                <h3 className="text-xl font-black text-blue-900 mb-4">{t('supportTitle')}</h3>
+                <p className="text-slate-600 font-medium leading-relaxed mb-6">
+                  {t('supportText')}
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Phone size={18} /></div>
+                    <span className="font-bold text-slate-800 text-lg">+507 68347266</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Phone size={18} /></div>
+                    <span className="font-bold text-slate-800 text-lg">+507 63672394</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center gap-6 p-8 bg-slate-50 rounded-[2rem] border border-slate-100 shadow-sm">
                 <div className="bg-blue-900 p-4 rounded-2xl text-white shadow-lg"><Mail size={24} /></div>
                 <div>

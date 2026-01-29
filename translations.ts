@@ -174,5 +174,37 @@ export const translations: Translation = {
   placeholderEmail: { en: 'your@email.com', es: 'tu@email.com' },
 
   // Messages
-  msgNoRecords: { en: 'No records found', es: 'No hay registros encontrados' }
+  msgNoRecords: { en: 'No records found', es: 'No hay registros encontrados' },
+
+  // New Content 2026 (Verbatim Spanish)
+  philosophyTitle: { en: 'Our Philosophy', es: 'Nuestra Filosofía' },
+  philosophyText: {
+    en: 'Istmo Global Services firmly believes in people\'s evolution through ideas and work. We believe collaboration is possible and that from these relationships across different fields of knowledge, synergies are provided to positively evolve, both Enterprise-wise and Professionally.',
+    es: 'Istmo Global Services apuesta firmemente por la evolución de las personas a través de las ideas y del trabajo. Creemos que la colaboración es posible y que a partir de estas relaciones en diferentes ámbitos del conocimiento se proporcionan sinergias para evolucionar positivamente, tanto Empresarial como Profesional.'
+  },
+
+  businessLinesTitle: { en: 'Our Business Lines', es: 'Nuestras Líneas de Trabajo' },
+  automotiveTitle: { en: 'Automotive Sector', es: 'Sector Automotriz' },
+  automotiveText: {
+    en: 'Our fundamental lines of work are directed mostly to the automotive sector; we currently possess an inventory of over 12,000 items including parts, pieces, and spares, both original and generic, for cars, mostly from Asian brands: Nissan, Kia, Hyundai, Toyota, Mitsubishi, among others; within these aggregates stand out: Filter elements, fuel and air, everything related to steering systems, suspension, batteries, tires, bearings, lubricants, among many more.',
+    es: 'Nuestras líneas fundamentales de trabajo van encaminadas mayoritariamente al sector automotriz, poseemos a día de hoy un inventario de más de 12 000 ítems entre partes, piezas, repuestos, tanto originales como genéricos, de autos, mayoritariamente de marcas asiáticas: Nissan, Kia, Hyundai, Toyota, Mitsubishi, entre otras; dentro de estos agregados destacan: Elementos filtrantes, de combustible y aire, todo lo relacionado a sistemas de dirección, suspensión, baterías, neumáticos, rodamientos, lubricantes, entre muchos más.'
+  },
+  steelTitle: { en: 'Steel & Renewables', es: 'Acero y Renovables' },
+  steelText: {
+    en: 'We have another sector of the Company that focuses its functions on the commercialization and distribution of steel derivatives: cyclone fence, barbed wire, structures, and similar; and inputs related to renewable energies.',
+    es: 'Tenemos otro sector de la Empresa que centra sus funciones  en la comercialización y distribución de derivados del acero: malla ciclónica, alambre de púas, estructuras, y similares; e insumos relacionados con las energías renovables'
+  },
+
+  ecommerceTitle: { en: 'Global E-commerce', es: 'E-commerce Global' },
+  ecommerceText: {
+    en: 'Through this page we want to offer our clients the possibility to make purchases from anywhere in the world and at any time of the day, throughout the year, to provide the comfort of buying at the moment that suits them best.',
+    es: 'A través de esta página queremos ofrecerles a nuestros clientes la posibilidad de realizar compras desde cualquier parte del mundo y en cualquier momento del día, durante todo el año, para brindarle la comodidad de comprar en el momento que más le convenga.'
+  },
+
+  supportTitle: { en: 'Customer Service', es: 'Atención al Cliente' },
+  supportText: {
+    en: 'For any concern, doubt, request, claim about products and services, information about warranties, assisted purchases, as well as any other topic related to actions performed through our platform you can communicate with our team of Customer Service Representatives through the following means:',
+    es: 'Para cualquier inquietud, duda, solicitud, reclamo sobre los productos y servicios, información sobre garantías, compras asistidas, así como cualquier otro tema relacionado con acciones realizadas a través de nuestra plataforma puede comunicarse con nuestro equipo de Representantes de Atención al Cliente a través de los siguientes medios:'
+  },
+  supportPhoneLabel: { en: 'Phones:', es: 'Teléfonos:' }
 };
