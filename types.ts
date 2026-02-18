@@ -14,15 +14,26 @@ export interface Brand {
   image?: string;
 }
 
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  size: string;
+  price: number;
+  status: 'Active' | 'Inactive';
+}
+
 export interface Product {
   id: string;
   brandId: string;
-  size: string;
-  categoryId: string; // Changed from category string to ID
+  name?: string; // Added for Model name (e.g. "Modelo 1")
+  categoryId: string;
   description: string;
   image: string;
-  price: number;
   status: 'Active' | 'Inactive';
+  variants?: ProductVariant[];
+  // Keep size and price for backward compatibility or as defaults
+  size: string;
+  price: number;
 }
 
 export interface Prospect {

@@ -12,7 +12,7 @@ import {
 import ImageUpload from './ImageUpload';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from './translations';
-import { Language, Product, Prospect, Category, Brand, User, SiteSettings } from './types';
+import { Language, Product, ProductVariant, Prospect, Category, Brand, User, SiteSettings } from './types';
 import { getProducts, getProspects, saveProducts, saveProspects, addProspect, getCategories, saveCategories, getBrands, saveBrands } from './store';
 import { fetchBrands, fetchProducts, fetchCategories, createBrand, updateBrand, deleteBrand, createCategory, updateCategory, deleteCategory, createProduct, updateProduct, deleteProduct, loginUser, createUser, createOrder, fetchOrders, fetchUsers, fetchProspects, updateUser, deleteUser, updateProspect, deleteProspect, fetchSettings, updateSettings } from './dataService';
 import { Order } from './types';
@@ -331,18 +331,29 @@ const ProductDetailModal = ({ product, isOpen, onClose }: { product: Product | n
   const { settings } = useContext(SettingsContext);
   const [quantity, setQuantity] = useState(1);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
 
   useEffect(() => {
     fetchBrands().then(setBrands);
   }, []);
 
   useEffect(() => {
-    if (isOpen) setQuantity(1);
-  }, [isOpen]);
+    if (isOpen) {
+      setQuantity(1);
+      // Default to first variant if exists, otherwise null
+      if (product?.variants && product.variants.length > 0) {
+        setSelectedVariant(product.variants[0]);
+      } else {
+        setSelectedVariant(null);
+      }
+    }
+  }, [isOpen, product]);
 
   if (!isOpen || !product) return null;
 
   const brandName = brands.find(b => b.id === product.brandId)?.name || 'Unknown';
+  const displayPrice = selectedVariant ? selectedVariant.price : product.price;
+  const displaySize = selectedVariant ? selectedVariant.size : product.size;
 
   const handleIncrease = () => {
     const isB2C = !user || user.role === 'b2c';
@@ -389,16 +400,40 @@ const ProductDetailModal = ({ product, isOpen, onClose }: { product: Product | n
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="text-sm font-black text-blue-600 uppercase tracking-widest mb-2">{brandName}</h3>
-                <h2 className="text-4xl font-black text-slate-900 leading-tight">{product.size}</h2>
+                <h2 className="text-4xl font-black text-slate-900 leading-tight">{product.name || displaySize}</h2>
               </div>
               <button onClick={onClose} className="hidden md:block p-2 hover:bg-slate-50 rounded-full transition-colors"><X size={24} /></button>
             </div>
 
             <div className="space-y-6 flex-1">
               <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-black text-slate-900">{settings.show_prices ? `$${product.price?.toFixed(2) || '0.00'}` : t('priceInquire')}</span>
+                <span className="text-5xl font-black text-slate-900">{settings.show_prices ? `$${displayPrice?.toFixed(2) || '0.00'}` : t('priceInquire')}</span>
                 {settings.show_prices && <span className="text-slate-400 font-bold">USD</span>}
               </div>
+
+              {/* Variants / Size Selector */}
+              {product.variants && product.variants.length > 0 && (
+                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-3">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">Seleccionar Medida</label>
+                  <div className="relative">
+                    <select
+                      value={selectedVariant?.id || ''}
+                      onChange={(e) => {
+                        const variant = product.variants?.find(v => v.id === e.target.value);
+                        if (variant) setSelectedVariant(variant);
+                      }}
+                      className="w-full pl-6 pr-12 py-4 rounded-2xl bg-white border border-slate-200 outline-none font-bold text-slate-700 cursor-pointer appearance-none focus:ring-4 focus:ring-blue-900/5 transition-all text-lg"
+                    >
+                      {product.variants.map(v => (
+                        <option key={v.id} value={v.id}>{v.size} {settings.show_prices ? `- $${v.price}` : ''}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <ChevronRight size={20} className="rotate-90" />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="prose prose-slate">
                 <p className="text-slate-600 leading-relaxed font-medium">
@@ -410,10 +445,16 @@ const ProductDetailModal = ({ product, isOpen, onClose }: { product: Product | n
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
                   <div className="text-xs font-bold text-slate-400 uppercase mb-1">Estado</div>
                   <div className="font-bold text-slate-900 flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${product.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                    {product.status === 'Active' ? 'Disponible' : 'No Disponible'}
+                    <span className={`w-2 h-2 rounded-full ${(selectedVariant || product).status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    {(selectedVariant || product).status === 'Active' ? 'Disponible' : 'No Disponible'}
                   </div>
                 </div>
+                {!product.variants?.length && (
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div className="text-xs font-bold text-slate-400 uppercase mb-1">Medida</div>
+                    <div className="font-bold text-slate-900">{product.size}</div>
+                  </div>
+                )}
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
                   <div className="text-xs font-bold text-slate-400 uppercase mb-1">Categoría</div>
                   <div className="font-bold text-slate-900">Premium Tire</div>
@@ -431,7 +472,7 @@ const ProductDetailModal = ({ product, isOpen, onClose }: { product: Product | n
                 </div>
               </div>
               <button
-                onClick={() => { addToCart(product, quantity); onClose(); }}
+                onClick={() => { addToCart(product, quantity, selectedVariant || undefined); onClose(); }}
                 className="w-full py-5 bg-blue-900 text-white rounded-2xl font-black text-lg shadow-xl shadow-blue-900/20 hover:bg-blue-800 transition-all flex items-center justify-center gap-3 group"
               >
                 <ShoppingCart size={24} />
@@ -541,7 +582,7 @@ const HeroSearch = () => {
   }, []); // Run once on mount
 
   // Extract unique sizes
-  const sizes = Array.from(new Set(products.map(p => p.size))).sort();
+  const sizes = Array.from(new Set(products.flatMap(p => [p.size, ...(p.variants?.map(v => v.size) || [])]))).filter(Boolean).sort();
 
   const navigate = useNavigate();
 
@@ -549,8 +590,11 @@ const HeroSearch = () => {
     if (brandQuery.length > 0 || selectedSize) {
       const filtered = products.filter(p => {
         const brandName = brands.find(b => b.id === p.brandId)?.name || '';
-        const matchBrand = brandQuery ? brandName.toLowerCase().includes(brandQuery.toLowerCase()) : true;
-        const matchSize = selectedSize ? p.size === selectedSize : true;
+        const variantSizes = p.variants?.map(v => v.size) || [];
+        const matchBrand = brandQuery ?
+          (brandName.toLowerCase().includes(brandQuery.toLowerCase()) ||
+            (p.name || '').toLowerCase().includes(brandQuery.toLowerCase())) : true;
+        const matchSize = selectedSize ? (p.size === selectedSize || variantSizes.includes(selectedSize)) : true;
         return matchBrand && matchSize;
       });
       setResults(filtered.slice(0, 5));
@@ -637,9 +681,9 @@ const HeroSearch = () => {
                 >
                   <img src={p.image} alt={brandName} className="w-12 h-12 rounded-xl object-cover bg-slate-100" />
                   <div className="flex-1">
-                    <div className="font-bold text-slate-900">{brandName}</div>
-                    <div className="text-xs font-bold text-blue-500 uppercase tracking-widest">{p.size}</div>
-                    {settings.show_prices && p.price && <div className="text-xs font-black text-slate-900">${p.price}</div>}
+                    <div className="font-bold text-slate-900">{brandName} {p.name}</div>
+                    <div className="text-xs font-bold text-blue-500 uppercase tracking-widest">{p.size} {p.variants?.length ? `+ ${p.variants.length} más` : ''}</div>
+                    {settings.show_prices && p.price && <div className="text-xs font-black text-slate-900">Desde ${p.price}</div>}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); addToCart(p); }}
@@ -1149,9 +1193,14 @@ const CatalogPage = () => {
 
   const filtered = products.filter(p => {
     const brandName = brands.find(b => b.id === p.brandId)?.name || '';
+    const variantSizes = p.variants?.map(v => v.size).join(' ') || '';
     const matchesSearch = brandName.toLowerCase().includes(search.toLowerCase()) ||
-      p.size.toLowerCase().includes(search.toLowerCase());
-    const matchesFilter = filter === 'All' || p.categoryId === filter;
+      p.size.toLowerCase().includes(search.toLowerCase()) ||
+      (p.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      variantSizes.toLowerCase().includes(search.toLowerCase());
+
+    const productCategoryId = p.categoryId;
+    const matchesFilter = filter === 'All' || productCategoryId === filter;
     return matchesSearch && matchesFilter;
   });
 
@@ -1212,10 +1261,10 @@ const CatalogPage = () => {
                   </div>
                 </div>
                 <div className="p-8">
-                  <h3 className="text-xl font-black text-slate-900 mb-1">{brands.find(b => b.id === p.brandId)?.name || 'Unknown Brand'}</h3>
+                  <h3 className="text-xl font-black text-slate-900 mb-1 leading-tight">{brands.find(b => b.id === p.brandId)?.name || 'Unknown Brand'} {p.name}</h3>
                   <div className="flex justify-between items-center mb-6">
-                    <p className="text-slate-400 font-bold">{p.size}</p>
-                    {settings.show_prices && <p className="text-blue-600 font-bold text-lg">${p.price?.toFixed(2) || '0.00'}</p>}
+                    <p className="text-slate-400 font-bold">{p.variants?.length || 1} Medidas</p>
+                    {settings.show_prices && <p className="text-blue-600 font-bold text-lg">Desde ${p.price?.toFixed(2) || '0.00'}</p>}
                   </div>
                   <button onClick={() => setSelectedProduct(p)} className="w-full block py-4 rounded-xl bg-blue-50 text-blue-900 text-center font-black hover:bg-blue-900 hover:text-white transition-all text-sm uppercase tracking-wider">
                     Detalles
@@ -1621,7 +1670,17 @@ const ProductManagement = () => {
     fetchBrands().then(setBrands);
   }, []);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState<Partial<Product>>({ brandId: brands[0]?.id || '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '' });
+  const [currentProduct, setCurrentProduct] = useState<Partial<Product>>({
+    brandId: brands[0]?.id || '',
+    name: '',
+    size: '',
+    categoryId: categories[0]?.id || '',
+    description: '',
+    status: 'Active',
+    image: '',
+    price: 0,
+    variants: []
+  });
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -1647,7 +1706,14 @@ const ProductManagement = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalImage = currentProduct.image || 'https://picsum.photos/seed/tire/400/300';
-    const productToSave = { ...currentProduct, image: finalImage, price: Number(currentProduct.price) || 0 };
+    // Use first variant as default size/price for backward compatibility in cards
+    const mainVariant = currentProduct.variants?.[0];
+    const productToSave = {
+      ...currentProduct,
+      image: finalImage,
+      size: mainVariant?.size || currentProduct.size || '',
+      price: mainVariant?.price || Number(currentProduct.price) || 0
+    };
 
     if (currentProduct.id) {
       await updateProduct(productToSave as Product);
@@ -1684,10 +1750,10 @@ const ProductManagement = () => {
             </button>
           </div>
         </div>
-        <button onClick={() => { setCurrentProduct({ brandId: brands[0]?.id || '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '', price: 0 }); setIsEditing(true); }}
+        <button onClick={() => { setCurrentProduct({ brandId: brands[0]?.id || '', name: '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '', price: 0, variants: [] }); setIsEditing(true); }}
           className="flex items-center gap-3 px-8 py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20"
         >
-          <Plus size={20} /> Nuevo Neumático
+          <Plus size={20} /> Nuevo Modelo
         </button>
       </div>
 
@@ -1706,26 +1772,20 @@ const ProductManagement = () => {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-slate-400">Medida / Talla</label>
-                    <input required className="w-full px-5 py-4 rounded-2xl bg-slate-50 outline-none font-medium border border-slate-100 focus:bg-white focus:border-blue-900/20 transition-all" value={currentProduct.size} onChange={e => setCurrentProduct({ ...currentProduct, size: e.target.value })} />
+                    <label className="text-xs font-bold uppercase text-slate-400">Modelo / Nombre</label>
+                    <input required placeholder="Ej: VANTI AS" className="w-full px-5 py-4 rounded-2xl bg-slate-50 outline-none font-bold border border-slate-100 focus:bg-white focus:border-blue-900/20 transition-all" value={currentProduct.name} onChange={e => setCurrentProduct({ ...currentProduct, name: e.target.value })} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-slate-400">Precio (USD)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      required
-                      className="w-full px-5 py-4 rounded-2xl bg-slate-50 outline-none font-bold border border-slate-100 focus:bg-white focus:border-blue-900/20 transition-all text-blue-900"
-                      value={currentProduct.price}
-                      onChange={e => setCurrentProduct({ ...currentProduct, price: parseFloat(e.target.value) })}
-                    />
+                    <label className="text-xs font-bold uppercase text-slate-400">Categoría</label>
+                    <select className="w-full px-5 py-4 rounded-2xl bg-slate-50 outline-none font-bold border border-slate-100 focus:bg-white transition-all" value={currentProduct.categoryId} onChange={e => setCurrentProduct({ ...currentProduct, categoryId: e.target.value })}>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-slate-400">Estado</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">Estado Global</label>
                     <select className="w-full px-5 py-4 rounded-2xl bg-slate-50 outline-none font-bold border border-slate-100 focus:bg-white transition-all" value={currentProduct.status} onChange={e => setCurrentProduct({ ...currentProduct, status: e.target.value as any })}>
                       <option value="Active">Activo</option>
                       <option value="Inactive">Inactivo</option>
@@ -1733,23 +1793,81 @@ const ProductManagement = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2 col-span-2">
-                    <label className="text-xs font-bold uppercase text-slate-400">Categoría</label>
-                    <select className="w-full px-5 py-4 rounded-2xl bg-slate-50 outline-none font-bold border border-slate-100 focus:bg-white transition-all" value={currentProduct.categoryId} onChange={e => setCurrentProduct({ ...currentProduct, categoryId: e.target.value })}>
-                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+                {/* Variants Management */}
+                <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 space-y-6">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-black uppercase text-slate-900 tracking-widest">Medidas y Precios</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newVariants = [...(currentProduct.variants || []), { id: crypto.randomUUID(), productId: currentProduct.id || '', size: '', price: 0, status: 'Active' as const }];
+                        setCurrentProduct({ ...currentProduct, variants: newVariants });
+                      }}
+                      className="px-4 py-2 bg-blue-100 text-blue-900 rounded-xl text-xs font-black hover:bg-blue-200 transition-all flex items-center gap-2"
+                    >
+                      <Plus size={14} /> Añadir Medida
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {currentProduct.variants?.map((v, idx) => (
+                      <div key={v.id || idx} className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                        <div className="col-span-6">
+                          <input
+                            placeholder="Medida (Ej: 205/55 R16)"
+                            className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none font-bold text-sm"
+                            value={v.size}
+                            onChange={e => {
+                              const newVariants = [...(currentProduct.variants || [])];
+                              newVariants[idx].size = e.target.value;
+                              setCurrentProduct({ ...currentProduct, variants: newVariants });
+                            }}
+                          />
+                        </div>
+                        <div className="col-span-4">
+                          <input
+                            type="number"
+                            placeholder="Precio"
+                            className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none font-black text-sm text-blue-900"
+                            value={v.price}
+                            onChange={e => {
+                              const newVariants = [...(currentProduct.variants || [])];
+                              newVariants[idx].price = parseFloat(e.target.value) || 0;
+                              setCurrentProduct({ ...currentProduct, variants: newVariants });
+                            }}
+                          />
+                        </div>
+                        <div className="col-span-2 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newVariants = currentProduct.variants?.filter((_, i) => i !== idx);
+                              setCurrentProduct({ ...currentProduct, variants: newVariants });
+                            }}
+                            className="p-2 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {!currentProduct.variants?.length && (
+                      <div className="text-center py-6 text-slate-400 text-xs font-bold uppercase tracking-widest bg-white/50 rounded-2xl border-2 border-dashed border-slate-100">
+                        No hay medidas configuradas
+                      </div>
+                    )}
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <ImageUpload
                     currentImage={currentProduct.image}
                     onImageUploaded={(url) => setCurrentProduct(prev => ({ ...prev, image: url }))}
-                    label="Imagen del Producto"
+                    label="Imagen del Modelo"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-slate-400">Descripción</label>
+                  <label className="text-xs font-bold uppercase text-slate-400">Descripción Destacada</label>
                   <textarea rows={3} className="w-full px-5 py-4 rounded-2xl bg-slate-50 outline-none font-medium border border-slate-100 focus:bg-white transition-all" value={currentProduct.description} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })} />
                 </div>
                 <button type="submit" className="w-full py-5 bg-blue-900 text-white rounded-2xl font-black text-lg shadow-xl shadow-blue-900/20">Guardar Cambios</button>
@@ -1800,9 +1918,9 @@ const ProductManagement = () => {
                   <div className={`absolute top-2 right-2 w-3 h-3 rounded-full border-2 border-white shadow-sm ${p.status === 'Active' ? 'bg-green-500' : 'bg-slate-300'}`}></div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 leading-tight">{brands.find(b => b.id === p.brandId)?.name || 'Unknown'}</h3>
-                  <p className="text-slate-400 font-bold text-sm uppercase tracking-tighter mt-1">{p.size}</p>
-                  <p className="text-blue-600 font-bold text-xl mt-2 tracking-tighter">${p.price?.toFixed(2) || '0.00'}</p>
+                  <h3 className="text-xl font-black text-slate-900 leading-tight">{brands.find(b => b.id === p.brandId)?.name || 'Unknown'} {p.name}</h3>
+                  <p className="text-slate-400 font-bold text-sm uppercase tracking-tighter mt-1">{p.variants?.length || 0} Medidas disponibles</p>
+                  <p className="text-blue-600 font-bold text-xl mt-2 tracking-tighter">Desde ${p.price?.toFixed(2) || '0.00'}</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -1834,14 +1952,14 @@ const ProductManagement = () => {
                     <div className="flex items-center gap-4">
                       <img src={p.image} className="w-12 h-12 rounded-xl object-cover shadow-sm" />
                       <div>
-                        <div className="font-black text-slate-900">{brands.find(b => b.id === p.brandId)?.name || 'Unknown'}</div>
+                        <div className="font-black text-slate-900">{brands.find(b => b.id === p.brandId)?.name || 'Unknown'} {p.name}</div>
                         <div className="text-[10px] uppercase font-bold text-slate-400 tracking-tighter">ID: {p.id.slice(0, 8)}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="p-6 font-bold text-slate-700">{p.size}</td>
+                  <td className="p-6 font-bold text-slate-700">{p.variants?.length || 0} Medidas</td>
                   <td className="p-6 font-medium text-slate-500">{categories.find(c => c.id === p.categoryId)?.name || 'N/A'}</td>
-                  <td className="p-6 font-black text-blue-900 tracking-tight">${p.price?.toFixed(2)}</td>
+                  <td className="p-6 font-black text-blue-900 tracking-tight">Desde ${p.price?.toFixed(2)}</td>
                   <td className="p-6">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${p.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
                       {p.status === 'Active' ? 'Activo' : 'Inactivo'}

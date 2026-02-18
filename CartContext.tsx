@@ -1,15 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product } from './types';
+import { Product, ProductVariant } from './types';
 
 export interface CartItem extends Product {
     quantity: number;
+    selectedVariantId?: string;
+    cartId: string; // Composite ID to distinguish variants
 }
 
 interface CartContextType {
     items: CartItem[];
-    addToCart: (product: Product, quantity?: number) => void;
-    removeFromCart: (productId: string) => void;
-    updateQuantity: (productId: string, quantity: number) => void;
+    addToCart: (product: Product, quantity?: number, selectedVariant?: ProductVariant) => void;
+    removeFromCart: (cartId: string) => void;
+    updateQuantity: (cartId: string, quantity: number) => void;
     clearCart: () => void;
     total: number;
     isOpen: boolean;
@@ -31,10 +33,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [items, setItems] = useState<CartItem[]>([]);
     const [isOpen, setIsOpen] = useState(false);
 
-    // Load cart from localStorage on mount (optional persistence)
+    // Load cart from localStorage on mount
     useEffect(() => {
         const saved = localStorage.getItem('ig_cart');
-        if (saved) setItems(JSON.parse(saved));
+        if (saved) {
+            try {
+                setItems(JSON.parse(saved));
+            } catch (e) {
+                console.error("Error parsing cart", e);
+            }
+        }
     }, []);
 
     // Save cart to localStorage on change
@@ -42,28 +50,43 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('ig_cart', JSON.stringify(items));
     }, [items]);
 
-    const addToCart = (product: Product, quantity: number = 1) => {
+    const addToCart = (product: Product, quantity: number = 1, selectedVariant?: ProductVariant) => {
         setItems(current => {
-            const existing = current.find(item => item.id === product.id);
+            const variantId = selectedVariant?.id || 'default';
+            const cartId = `${product.id}-${variantId}`;
+
+            const existing = current.find(item => item.cartId === cartId);
+
             if (existing) {
                 return current.map(item =>
-                    item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+                    item.cartId === cartId ? { ...item, quantity: item.quantity + quantity } : item
                 );
             }
-            return [...current, { ...product, quantity }];
+
+            const newItem: CartItem = {
+                ...product,
+                quantity,
+                selectedVariantId: selectedVariant?.id,
+                cartId,
+                // Override main product size/price with variant values if selected
+                size: selectedVariant?.size || product.size,
+                price: selectedVariant?.price || product.price
+            };
+
+            return [...current, newItem];
         });
         setIsOpen(true);
     };
 
-    const removeFromCart = (productId: string) => {
-        setItems(current => current.filter(item => item.id !== productId));
+    const removeFromCart = (cartId: string) => {
+        setItems(current => current.filter(item => item.cartId !== cartId));
     };
 
-    const updateQuantity = (productId: string, quantity: number) => {
-        if (quantity < 1) return removeFromCart(productId);
+    const updateQuantity = (cartId: string, quantity: number) => {
+        if (quantity < 1) return removeFromCart(cartId);
         setItems(current =>
             current.map(item =>
-                item.id === productId ? { ...item, quantity } : item
+                item.cartId === cartId ? { ...item, quantity } : item
             )
         );
     };

@@ -60,15 +60,29 @@ export const deleteCategory = async (id: string) => {
 export const fetchProducts = async (): Promise<Product[]> => {
     try {
         const products = await sql`SELECT * FROM products`;
-        // Map snake_case DB columns to camelCase JS properties
-        return products.map((p: any) => ({
-            ...p,
-            brandId: p.brand_id,
-            categoryId: p.category_id,
-            price: Number(p.price) || 0, // Ensure price is a number
-            brand_id: undefined,
-            category_id: undefined
-        })) as Product[];
+        const variants = await sql`SELECT * FROM product_variants`;
+
+        return products.map((p: any) => {
+            const productVariants = variants
+                .filter((v: any) => v.product_id === p.id)
+                .map((v: any) => ({
+                    id: v.id,
+                    productId: v.product_id,
+                    size: v.size,
+                    price: Number(v.price) || 0,
+                    status: v.status
+                }));
+
+            return {
+                ...p,
+                brandId: p.brand_id,
+                categoryId: p.category_id,
+                price: Number(p.price) || 0,
+                brand_id: undefined,
+                category_id: undefined,
+                variants: productVariants
+            };
+        }) as Product[];
     } catch (error) {
         console.error('Error fetching products:', error);
         return [];
@@ -77,26 +91,69 @@ export const fetchProducts = async (): Promise<Product[]> => {
 
 export const createProduct = async (product: Omit<Product, 'id'>) => {
     const id = crypto.randomUUID();
-    await sql`
-        INSERT INTO products (id, brand_id, size, category_id, description, image, price, status)
-        VALUES (${id}, ${product.brandId}, ${product.size}, ${product.categoryId}, ${product.description}, ${product.image}, ${product.price}, ${product.status})
-    `;
-    return { ...product, id };
+    try {
+        // We use name field if it exists, otherwise empty string or description
+        await sql`
+            INSERT INTO products (id, brand_id, size, category_id, description, name, image, price, status)
+            VALUES (${id}, ${product.brandId}, ${product.size}, ${product.categoryId}, ${product.description}, ${product.name || ''}, ${product.image}, ${product.price}, ${product.status})
+        `;
+
+        if (product.variants && product.variants.length > 0) {
+            for (const v of product.variants) {
+                const vid = crypto.randomUUID();
+                await sql`
+                    INSERT INTO product_variants (id, product_id, size, price, status)
+                    VALUES (${vid}, ${id}, ${v.size}, ${v.price}, ${v.status})
+                `;
+            }
+        } else {
+            // Create a default variant from the product's main size/price
+            const vid = crypto.randomUUID();
+            await sql`
+                INSERT INTO product_variants (id, product_id, size, price, status)
+                VALUES (${vid}, ${id}, ${product.size}, ${product.price}, ${product.status})
+            `;
+        }
+        return { ...product, id };
+    } catch (e) {
+        console.error("Error creating product", e);
+        throw e;
+    }
 };
 
 export const updateProduct = async (product: Product) => {
-    await sql`
-        UPDATE products 
-        SET brand_id = ${product.brandId}, 
-            size = ${product.size}, 
-            category_id = ${product.categoryId}, 
-            description = ${product.description}, 
-            image = ${product.image}, 
-            price = ${product.price},
-            status = ${product.status}
-        WHERE id = ${product.id}
-    `;
-    return product;
+    try {
+        await sql`
+            UPDATE products 
+            SET brand_id = ${product.brandId}, 
+                size = ${product.size}, 
+                category_id = ${product.categoryId}, 
+                description = ${product.description}, 
+                name = ${product.name || ''},
+                image = ${product.image}, 
+                price = ${product.price},
+                status = ${product.status}
+            WHERE id = ${product.id}
+        `;
+
+        // Simple sync for variants: Delete all and re-insert for now
+        // Or we could do a more sophisticated diffing
+        await sql`DELETE FROM product_variants WHERE product_id = ${product.id}`;
+
+        if (product.variants && product.variants.length > 0) {
+            for (const v of product.variants) {
+                const vid = v.id || crypto.randomUUID();
+                await sql`
+                    INSERT INTO product_variants (id, product_id, size, price, status)
+                    VALUES (${vid}, ${product.id}, ${v.size}, ${v.price}, ${v.status})
+                `;
+            }
+        }
+        return product;
+    } catch (e) {
+        console.error("Error updating product", e);
+        throw e;
+    }
 };
 
 export const deleteProduct = async (id: string) => {
