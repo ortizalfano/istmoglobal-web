@@ -2762,7 +2762,7 @@ const ClientLoginPage = () => {
 
 
 const AdminSettings = () => {
-  const { settings, setSettings, refreshSettings } = useContext(SettingsContext);
+  const { settings, setSettings } = useContext(SettingsContext);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleTogglePrices = async () => {
@@ -2771,7 +2771,6 @@ const AdminSettings = () => {
       const newSettings = { ...settings, show_prices: !settings.show_prices };
       await updateSettings(newSettings);
       setSettings(newSettings);
-      alert('Configuración actualizada con éxito');
     } catch (err) {
       console.error('Error updating settings:', err);
       alert('Error al actualizar la configuración');
@@ -2781,22 +2780,67 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-4xl font-black text-slate-900">Configuración del Sitio</h1>
-      <div className="bg-white rounded-[2rem] p-10 border border-slate-200 shadow-sm max-w-2xl">
-        <div className="space-y-8">
-          <div className="flex items-center justify-between p-6 bg-slate-50 rounded-3xl border border-slate-100">
-            <div>
-              <h3 className="text-xl font-bold text-slate-900">Mostrar Precios</h3>
-              <p className="text-slate-500 font-medium">Si se desactiva, no se mostrarán los precios en ninguna parte de la web, pero se podrá seguir agregando al carrito.</p>
+    <div className="space-y-10">
+      <div className="flex items-center gap-4">
+        <div className="p-3 bg-blue-900 text-white rounded-2xl shadow-lg shadow-blue-900/20">
+          <Settings size={28} />
+        </div>
+        <div>
+          <h1 className="text-4xl font-black text-slate-900">Configuración</h1>
+          <p className="text-slate-500 font-medium">Gestiona el comportamiento global de tu plataforma.</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[2.5rem] p-10 md:p-12 border border-slate-200 shadow-xl shadow-blue-900/5 max-w-4xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-10">
+          <div className="flex-1">
+            <h3 className="text-2xl font-black text-slate-900 mb-4 flex items-center gap-3">
+              Visibilidad de Precios
+              {!settings.show_prices && (
+                <span className="px-3 py-1 bg-red-100 text-red-600 text-[10px] uppercase font-black rounded-full tracking-widest">Precios Ocultos</span>
+              )}
+            </h3>
+            <p className="text-slate-600 font-medium leading-relaxed text-lg">
+              Esta opción afecta a toda la web pública. Si desactivas los precios, los clientes verán el texto <span className="text-blue-600 font-black">"Consultar"</span> en lugar del valor numérico.
+            </p>
+            <div className="mt-6 flex items-center gap-4 text-sm text-slate-400 font-bold">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                Catálogo Público
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                Detalle de Producto
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                Carrito y WhatsApp
+              </div>
             </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-4 bg-slate-50 p-8 rounded-[2rem] border border-slate-100 min-w-[240px]">
+            <span className={`text-xs font-black uppercase tracking-[0.2em] ${settings.show_prices ? 'text-blue-600' : 'text-slate-400'}`}>
+              {settings.show_prices ? 'Precios Visibles' : 'Precios Ocultos'}
+            </span>
+
             <button
               onClick={handleTogglePrices}
               disabled={isSaving}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${settings.show_prices ? 'bg-blue-600' : 'bg-slate-300'}`}
+              className={`relative inline-flex h-10 w-20 items-center rounded-full transition-all duration-500 focus:outline-none shadow-inner group ${settings.show_prices ? 'bg-blue-600' : 'bg-slate-300'}`}
             >
-              <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${settings.show_prices ? 'translate-x-7' : 'translate-x-1'}`} />
+              <div
+                className={`absolute w-8 h-8 bg-white rounded-full shadow-lg transform transition-transform duration-500 flex items-center justify-center ${settings.show_prices ? 'translate-x-[2.75rem]' : 'translate-x-1'}`}
+              >
+                {isSaving ? (
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <div className={`w-1.5 h-1.5 rounded-full ${settings.show_prices ? 'bg-blue-600' : 'bg-slate-300'}`} />
+                )}
+              </div>
             </button>
+
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Click para cambiar</p>
           </div>
         </div>
       </div>
