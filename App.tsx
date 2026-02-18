@@ -12,9 +12,9 @@ import {
 import ImageUpload from './ImageUpload';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from './translations';
-import { Language, Product, Prospect, Category, Brand, User } from './types';
+import { Language, Product, Prospect, Category, Brand, User, SiteSettings } from './types';
 import { getProducts, getProspects, saveProducts, saveProspects, addProspect, getCategories, saveCategories, getBrands, saveBrands } from './store';
-import { fetchBrands, fetchProducts, fetchCategories, createBrand, updateBrand, deleteBrand, createCategory, updateCategory, deleteCategory, createProduct, updateProduct, deleteProduct, loginUser, createUser, createOrder, fetchOrders, fetchUsers, fetchProspects, updateUser, deleteUser, updateProspect, deleteProspect } from './dataService';
+import { fetchBrands, fetchProducts, fetchCategories, createBrand, updateBrand, deleteBrand, createCategory, updateCategory, deleteCategory, createProduct, updateProduct, deleteProduct, loginUser, createUser, createOrder, fetchOrders, fetchUsers, fetchProspects, updateUser, deleteUser, updateProspect, deleteProspect, fetchSettings, updateSettings } from './dataService';
 import { Order } from './types';
 import { CartProvider, useCart } from './CartContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -34,20 +34,31 @@ const AuthContext = createContext<{
   register: (user: Omit<User, 'id'>) => Promise<boolean>;
 }>({ user: null, login: async () => false, logout: () => { }, register: async () => false });
 
+const SettingsContext = createContext<{
+  settings: SiteSettings;
+  setSettings: (s: SiteSettings) => void;
+  refreshSettings: () => Promise<void>;
+}>({
+  settings: { show_prices: true },
+  setSettings: () => { },
+  refreshSettings: async () => { }
+});
+
 // --- Components: UI ---
 const CartDrawer = () => {
   const { items, isOpen, setIsOpen, removeFromCart, updateQuantity, total, clearCart } = useCart();
   const { user } = useContext(AuthContext);
   const { t } = useContext(LanguageContext);
+  const { settings } = useContext(SettingsContext);
   const navigate = useNavigate();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   if (!isOpen) return null;
 
   const handleWhatsAppGuest = () => {
-    const message = `*Nueva Orden de Pedido (Invitado)*\\n\\n` +
-      items.map(i => `- ${i.quantity}x ${i.size} (${i.price ? '$' + i.price : 'Consultar'})`).join('\\n') +
-      `\\n\\n*Total Estimado: $${total.toFixed(2)}*`;
+    const message = `*Nueva Orden de Pedido (Invitado)*\n\n` +
+      items.map(i => `- ${i.quantity}x ${i.size} (${(i.price && settings.show_prices) ? '$' + i.price : 'Consultar'})`).join('\n') +
+      (settings.show_prices ? `\n\n*Total Estimado: $${total.toFixed(2)}*` : '');
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     setShowLoginPrompt(false);
   };
@@ -96,7 +107,7 @@ const CartDrawer = () => {
                 <img src={item.image} className="w-20 h-20 object-cover rounded-xl bg-slate-100" />
                 <div className="flex-1">
                   <h4 className="font-bold text-slate-900">{item.size}</h4>
-                  <p className="text-blue-600 font-bold">${item.price}</p>
+                  {settings.show_prices && <p className="text-blue-600 font-bold">${item.price}</p>}
                   <div className="flex items-center gap-3 mt-2">
                     <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1 bg-slate-100 rounded-lg hover:bg-slate-200"><Minus size={14} /></button>
                     <span className="font-bold text-sm w-4 text-center">{item.quantity}</span>
@@ -112,7 +123,7 @@ const CartDrawer = () => {
         <div className="border-t border-slate-100 pt-6 mt-6">
           <div className="flex justify-between items-center mb-6">
             <span className="text-slate-500 font-bold">{t('cartEstimatedTotal')}</span>
-            <span className="text-3xl font-black text-blue-900">${total.toFixed(2)}</span>
+            <span className="text-3xl font-black text-blue-900">{settings.show_prices ? `$${total.toFixed(2)}` : t('priceInquire')}</span>
           </div>
           <button onClick={handleCheckout} disabled={items.length === 0} className="w-full py-4 bg-green-600 text-white rounded-2xl font-black hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl shadow-green-600/20">
             {user ? 'Confirmar Pedido' : 'Continuar Compra'}
@@ -317,6 +328,7 @@ const ProductDetailModal = ({ product, isOpen, onClose }: { product: Product | n
   const { t } = useContext(LanguageContext);
   const { addToCart } = useCart();
   const { user } = useContext(AuthContext);
+  const { settings } = useContext(SettingsContext);
   const [quantity, setQuantity] = useState(1);
   const [brands, setBrands] = useState<Brand[]>([]);
 
@@ -384,8 +396,8 @@ const ProductDetailModal = ({ product, isOpen, onClose }: { product: Product | n
 
             <div className="space-y-6 flex-1">
               <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-black text-slate-900">${product.price?.toFixed(2) || t('priceInquire')}</span>
-                <span className="text-slate-400 font-bold">USD</span>
+                <span className="text-5xl font-black text-slate-900">{settings.show_prices ? `$${product.price?.toFixed(2) || '0.00'}` : t('priceInquire')}</span>
+                {settings.show_prices && <span className="text-slate-400 font-bold">USD</span>}
               </div>
 
               <div className="prose prose-slate">
@@ -498,6 +510,7 @@ const FeaturedBrands = () => {
 const HeroSearch = () => {
   const { t } = useContext(LanguageContext);
   const { addToCart } = useCart();
+  const { settings } = useContext(SettingsContext);
   const [brandQuery, setBrandQuery] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
   const [results, setResults] = useState<Product[]>([]);
@@ -626,7 +639,7 @@ const HeroSearch = () => {
                   <div className="flex-1">
                     <div className="font-bold text-slate-900">{brandName}</div>
                     <div className="text-xs font-bold text-blue-500 uppercase tracking-widest">{p.size}</div>
-                    {p.price && <div className="text-xs font-black text-slate-900">${p.price}</div>}
+                    {settings.show_prices && p.price && <div className="text-xs font-black text-slate-900">${p.price}</div>}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); addToCart(p); }}
@@ -1112,6 +1125,7 @@ const AboutPage = () => {
 
 const CatalogPage = () => {
   const { t } = useContext(LanguageContext);
+  const { settings } = useContext(SettingsContext);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -1201,7 +1215,7 @@ const CatalogPage = () => {
                   <h3 className="text-xl font-black text-slate-900 mb-1">{brands.find(b => b.id === p.brandId)?.name || 'Unknown Brand'}</h3>
                   <div className="flex justify-between items-center mb-6">
                     <p className="text-slate-400 font-bold">{p.size}</p>
-                    <p className="text-blue-600 font-bold text-lg">${p.price?.toFixed(2) || '0.00'}</p>
+                    {settings.show_prices && <p className="text-blue-600 font-bold text-lg">${p.price?.toFixed(2) || '0.00'}</p>}
                   </div>
                   <button onClick={() => setSelectedProduct(p)} className="w-full block py-4 rounded-xl bg-blue-50 text-blue-900 text-center font-black hover:bg-blue-900 hover:text-white transition-all text-sm uppercase tracking-wider">
                     Detalles
@@ -1318,6 +1332,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { name: 'Categorías', icon: LayoutGrid, path: '/admin/categories' },
     { name: 'Productos', icon: Package, path: '/admin/products' },
     { name: 'Prospectos / Clientes', icon: Users, path: '/admin/prospects' },
+    { name: 'Configuración', icon: Settings, path: '/admin/settings' },
   ];
 
   return (
@@ -2746,6 +2761,50 @@ const ClientLoginPage = () => {
 };
 
 
+const AdminSettings = () => {
+  const { settings, setSettings, refreshSettings } = useContext(SettingsContext);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleTogglePrices = async () => {
+    setIsSaving(true);
+    try {
+      const newSettings = { ...settings, show_prices: !settings.show_prices };
+      await updateSettings(newSettings);
+      setSettings(newSettings);
+      alert('Configuración actualizada con éxito');
+    } catch (err) {
+      console.error('Error updating settings:', err);
+      alert('Error al actualizar la configuración');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <h1 className="text-4xl font-black text-slate-900">Configuración del Sitio</h1>
+      <div className="bg-white rounded-[2rem] p-10 border border-slate-200 shadow-sm max-w-2xl">
+        <div className="space-y-8">
+          <div className="flex items-center justify-between p-6 bg-slate-50 rounded-3xl border border-slate-100">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900">Mostrar Precios</h3>
+              <p className="text-slate-500 font-medium">Si se desactiva, no se mostrarán los precios en ninguna parte de la web, pero se podrá seguir agregando al carrito.</p>
+            </div>
+            <button
+              onClick={handleTogglePrices}
+              disabled={isSaving}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${settings.show_prices ? 'bg-blue-600' : 'bg-slate-300'}`}
+            >
+              <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${settings.show_prices ? 'translate-x-7' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 // --- App Entry ---
 const App = () => {
   // Detect browser language on first load
@@ -2769,6 +2828,20 @@ const App = () => {
     localStorage.setItem('language', lang);
   }, [lang]);
   const [user, setUser] = useState<User | null>(null);
+  const [settings, setSettings] = useState<SiteSettings>({ show_prices: true });
+
+  const refreshSettings = async () => {
+    try {
+      const s = await fetchSettings();
+      setSettings(s);
+    } catch (err) {
+      console.error("Failed to fetch settings", err);
+    }
+  };
+
+  useEffect(() => {
+    refreshSettings();
+  }, []);
 
   const t = (key: string) => translations[key]?.[lang] || key;
 
@@ -2800,36 +2873,39 @@ const App = () => {
 
   return (
     <AuthContext.Provider value={authContextValue}>
-      <LanguageContext.Provider value={{ lang, setLang, t }}>
-        <CartProvider>
-          <HashRouter>
-            <div className="flex flex-col min-h-screen overflow-x-hidden">
-              <Navbar />
-              <CartDrawer />
-              <div className="flex-grow">
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/catalog" element={<CatalogPage />} />
-                  <Route path="/about" element={<AboutPage />} />
-                  <Route path="/markets" element={<MarketsPage />} />
-                  <Route path="/login" element={<ClientLoginPage />} />
-                  <Route path="/signup" element={<SignupPage />} />
+      <SettingsContext.Provider value={{ settings, setSettings, refreshSettings }}>
+        <LanguageContext.Provider value={{ lang, setLang, t }}>
+          <CartProvider>
+            <HashRouter>
+              <div className="flex flex-col min-h-screen overflow-x-hidden">
+                <Navbar />
+                <CartDrawer />
+                <div className="flex-grow">
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/catalog" element={<CatalogPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/markets" element={<MarketsPage />} />
+                    <Route path="/login" element={<ClientLoginPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
 
-                  <Route path="/admin/login" element={<LoginPage />} />
-                  <Route path="/admin" element={<AdminLayout><DashboardHome /></AdminLayout>} />
-                  <Route path="/admin/orders" element={<AdminLayout><AdminOrders /></AdminLayout>} />
-                  <Route path="/admin/brands" element={<AdminLayout><BrandManagement /></AdminLayout>} />
-                  <Route path="/admin/products" element={<AdminLayout><ProductManagement /></AdminLayout>} />
-                  <Route path="/admin/categories" element={<AdminLayout><CategoryManagement /></AdminLayout>} />
-                  <Route path="/admin/prospects" element={<AdminLayout><ProspectManagement /></AdminLayout>} />
-                  <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
+                    <Route path="/admin/login" element={<LoginPage />} />
+                    <Route path="/admin" element={<AdminLayout><DashboardHome /></AdminLayout>} />
+                    <Route path="/admin/orders" element={<AdminLayout><AdminOrders /></AdminLayout>} />
+                    <Route path="/admin/brands" element={<AdminLayout><BrandManagement /></AdminLayout>} />
+                    <Route path="/admin/products" element={<AdminLayout><ProductManagement /></AdminLayout>} />
+                    <Route path="/admin/categories" element={<AdminLayout><CategoryManagement /></AdminLayout>} />
+                    <Route path="/admin/prospects" element={<AdminLayout><ProspectManagement /></AdminLayout>} />
+                    <Route path="/admin/settings" element={<AdminLayout><AdminSettings /></AdminLayout>} />
+                    <Route path="*" element={<Navigate to="/" />} />
+                  </Routes>
+                </div>
+                <Footer />
               </div>
-              <Footer />
-            </div>
-          </HashRouter>
-        </CartProvider>
-      </LanguageContext.Provider>
+            </HashRouter>
+          </CartProvider>
+        </LanguageContext.Provider>
+      </SettingsContext.Provider>
     </AuthContext.Provider>
   );
 };

@@ -72,3 +72,7 @@ export interface Translation {
   };
 }
 
+export interface SiteSettings {
+  show_prices: boolean;
+}
+

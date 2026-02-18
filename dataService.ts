@@ -1,5 +1,5 @@
 import sql from './db';
-import { Brand, Category, Product, Prospect, User, Order } from './types';
+import { Brand, Category, Product, Prospect, User, Order, SiteSettings } from './types';
 import bcrypt from 'bcryptjs';
 
 // --- Brands ---
@@ -265,5 +265,38 @@ export const fetchOrders = async (): Promise<Order[]> => {
     } catch (error) {
         console.error('Error fetching orders:', error);
         return [];
+    }
+};
+
+// --- Settings ---
+export const fetchSettings = async (): Promise<SiteSettings> => {
+    try {
+        const settings = await sql`SELECT key, value FROM site_settings`;
+        const settingsObj: any = {
+            show_prices: true // Default
+        };
+        settings.forEach((s: any) => {
+            if (s.key === 'show_prices') {
+                settingsObj.show_prices = s.value === 'true';
+            }
+        });
+        return settingsObj as SiteSettings;
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+        return { show_prices: true };
+    }
+};
+
+export const updateSettings = async (settings: SiteSettings) => {
+    try {
+        await sql`
+            INSERT INTO site_settings (key, value)
+            VALUES ('show_prices', ${settings.show_prices ? 'true' : 'false'})
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+        `;
+        return settings;
+    } catch (error) {
+        console.error('Error updating settings:', error);
+        throw error;
     }
 };
