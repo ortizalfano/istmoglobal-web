@@ -7,8 +7,9 @@ import {
   Zap, BarChart2, Users, Package, Settings, LogOut, Plus, Trash2,
   AlertTriangle, // Added for deletion warning modal
   Edit, Filter, LayoutGrid, Award, ShoppingCart, MessageSquare, Edit3, CheckCircle, Minus, Trash, List,
-  Ship, Container, Globe, Target, Activity, Lock // Added Lock icon
+  Ship, Container, Globe, Target, Activity, Lock, FileUp, Download // Added FileUp and Download
 } from 'lucide-react';
+import Papa from 'papaparse';
 import ImageUpload from './ImageUpload';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from './translations';
@@ -1684,6 +1685,88 @@ const ProductManagement = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+
+  const downloadTemplate = () => {
+    const headers = ["Marca", "Modelo", "Categoria", "Descripcion", "Medida", "Precio", "ImagenURL"];
+    const example = ["Ardent", "VANTI AS", "Passenger", "Neumático de alto rendimiento", "205/55 R16", "45.00", "https://picsum.photos/seed/tire1/800/800"];
+    const csvContent = [headers, example].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "plantilla_importacion_productos.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportLoading(true);
+    setImportProgress(0);
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const data = results.data as any[];
+
+        // Group by Brand + Model to handle variants
+        const productsMap: { [key: string]: any } = {};
+
+        data.forEach(row => {
+          const key = `${row.Marca}-${row.Modelo}`;
+          if (!productsMap[key]) {
+            productsMap[key] = {
+              brandId: brands.find(b => b.name.toLowerCase() === row.Marca?.toLowerCase())?.id || brands[0]?.id,
+              name: row.Modelo || '',
+              categoryId: categories.find(c => c.name.toLowerCase() === row.Categoria?.toLowerCase())?.id || categories[0]?.id,
+              description: row.Descripcion || '',
+              status: 'Active',
+              image: row.ImagenURL || 'https://picsum.photos/seed/tire/800/800',
+              variants: []
+            };
+          }
+
+          if (row.Medida && row.Precio) {
+            productsMap[key].variants.push({
+              id: crypto.randomUUID(),
+              size: row.Medida,
+              price: parseFloat(row.Precio) || 0,
+              status: 'Active'
+            });
+          }
+        });
+
+        const productList = Object.values(productsMap);
+        const total = productList.length;
+
+        for (let i = 0; i < productList.length; i++) {
+          const p = productList[i];
+          // Ensure main price/size are set for backward compat
+          p.size = p.variants[0]?.size || '';
+          p.price = p.variants[0]?.price || 0;
+
+          await createProduct(p as any);
+          setImportProgress(Math.round(((i + 1) / total) * 100));
+        }
+
+        fetchProducts().then(setProducts);
+        setImportLoading(false);
+        setIsImporting(false);
+        alert("Importación completada con éxito");
+      },
+      error: (error) => {
+        console.error("Error parsing CSV:", error);
+        setImportLoading(false);
+        alert("Error al procesar el archivo CSV");
+      }
+    });
+  };
 
   const handleDeleteClick = (id: string) => {
     setProductToDelete(id);
@@ -1750,11 +1833,19 @@ const ProductManagement = () => {
             </button>
           </div>
         </div>
-        <button onClick={() => { setCurrentProduct({ brandId: brands[0]?.id || '', name: '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '', price: 0, variants: [] }); setIsEditing(true); }}
-          className="flex items-center gap-3 px-8 py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20"
-        >
-          <Plus size={20} /> Nuevo Modelo
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsImporting(true)}
+            className="flex items-center gap-3 px-6 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all border border-slate-200"
+          >
+            <FileUp size={20} /> Importar
+          </button>
+          <button onClick={() => { setCurrentProduct({ brandId: brands[0]?.id || '', name: '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '', price: 0, variants: [] }); setIsEditing(true); }}
+            className="flex items-center gap-3 px-8 py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20"
+          >
+            <Plus size={20} /> Nuevo Modelo
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -1903,6 +1994,91 @@ const ProductManagement = () => {
                   Eliminar
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isImporting && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-6">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-[3rem] shadow-3xl w-full max-w-lg p-10 overflow-hidden relative">
+              <button
+                onClick={() => !importLoading && setIsImporting(false)}
+                disabled={importLoading}
+                className="absolute top-8 right-8 p-3 bg-slate-100 rounded-full hover:bg-slate-200 transition-all disabled:opacity-50"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-blue-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6 transform rotate-12">
+                  <FileUp size={40} className="text-blue-900 -rotate-12" />
+                </div>
+                <h2 className="text-3xl font-black text-slate-900 mb-2">Importar Productos</h2>
+                <p className="text-slate-500 font-medium tracking-tight">Sube un archivo CSV con tus neumáticos y medidas.</p>
+              </div>
+
+              {!importLoading ? (
+                <div className="space-y-6">
+                  <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100/50 space-y-4">
+                    <h4 className="text-sm font-black text-blue-900 uppercase tracking-widest pl-1">Paso 1: Preparar archivo</h4>
+                    <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                      Utiliza nuestra plantilla para asegurar que los datos se importen correctamente. Si un modelo tiene varias medidas, agrégalas en líneas separadas.
+                    </p>
+                    <button
+                      onClick={downloadTemplate}
+                      className="flex items-center gap-2 text-blue-900 font-black text-xs hover:underline"
+                    >
+                      <Download size={14} /> Descargar Plantilla .CSV
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest pl-2">Paso 2: Subir archivo</h4>
+                    <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 rounded-[2.5rem] bg-slate-50 hover:bg-white hover:border-blue-400 cursor-pointer transition-all group">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Plus className="w-10 h-10 text-slate-300 group-hover:text-blue-500 mb-4 transition-all" />
+                        <p className="mb-2 text-sm text-slate-500 font-bold">Haga clic o arrastre su archivo .csv</p>
+                        <p className="text-xs text-slate-400">Separado por comas (,)</p>
+                      </div>
+                      <input type="file" className="hidden" accept=".csv" onChange={handleImportCSV} />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-12 flex flex-col items-center justify-center space-y-8">
+                  <div className="relative w-32 h-32 flex items-center justify-center">
+                    <svg className="w-full h-full -rotate-90">
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="58"
+                        fill="transparent"
+                        stroke="#F1F5F9"
+                        strokeWidth="12"
+                      />
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="58"
+                        fill="transparent"
+                        stroke="#1E3A8A"
+                        strokeWidth="12"
+                        strokeDasharray={364}
+                        strokeDashoffset={364 - (364 * importProgress) / 100}
+                        strokeLinecap="round"
+                        className="transition-all duration-300"
+                      />
+                    </svg>
+                    <span className="absolute text-2xl font-black text-blue-900">{importProgress}%</span>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-black text-slate-900 text-xl mb-1">Importando catálogo...</p>
+                    <p className="text-slate-500 font-medium tracking-tight">Estamos procesando y guardando los neumáticos en el sistema.</p>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
