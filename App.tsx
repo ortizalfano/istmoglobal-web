@@ -1712,6 +1712,7 @@ const ProductManagement = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const downloadTemplate = () => {
     const headers = ["Marca", "Modelo", "Categoria", "Descripcion", "Medida", "Precio", "ImagenURL", "FichaTecnicaURL"];
@@ -1871,26 +1872,46 @@ const ProductManagement = () => {
 
   const [isPriceFocused, setIsPriceFocused] = useState(false);
 
+  const filteredProducts = products.filter(p => {
+    const brandName = brands.find(b => b.id === p.brandId)?.name || '';
+    const categoryName = categories.find(c => c.id === p.categoryId)?.name || '';
+    const searchableText = `${brandName} ${p.name} ${categoryName} ${p.size} ${p.variants?.map(v => v.size).join(' ')}`.toLowerCase();
+    return searchableText.includes(searchQuery.toLowerCase());
+  });
+
   return (
     <div className="space-y-10">
-      <div className="flex justify-between items-center bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center gap-6">
           <h1 className="text-3xl font-black text-slate-900">{t('adminCatalogManagement')}</h1>
-          <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-blue-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-              title="Vista Cuadrícula"
-            >
-              <LayoutGrid size={20} />
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white text-blue-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-              title="Vista Tabla"
-            >
-              <List size={20} />
-            </button>
+          <div className="flex items-center gap-4">
+            <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-blue-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+                title="Vista Cuadrícula"
+              >
+                <LayoutGrid size={20} />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white text-blue-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+                title="Vista Tabla"
+              >
+                <List size={20} />
+              </button>
+            </div>
+
+            <div className="relative group min-w-[300px]">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-900 transition-colors" size={20} />
+              <input
+                type="text"
+                placeholder="Buscar por marca, modelo o medida..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-14 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:bg-white focus:border-blue-900/20 transition-all font-bold text-slate-700"
+              />
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -2155,7 +2176,7 @@ const ProductManagement = () => {
 
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
-          {products.map(p => (
+          {filteredProducts.map(p => (
             <motion.div layout key={p.id} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 group hover:shadow-xl transition-all duration-500">
               <div className="flex items-center gap-5 mb-6">
                 <div className="relative group/img overflow-hidden rounded-2xl">
@@ -2191,7 +2212,7 @@ const ProductManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {products.map(p => (
+              {filteredProducts.map(p => (
                 <tr key={p.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="p-6">
                     <div className="flex items-center gap-4">
