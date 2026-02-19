@@ -658,7 +658,7 @@ const HeroSearch = () => {
   ];
 
   return (
-    <div className="w-full max-w-4xl">
+    <div className="w-full max-w-4xl mb-12">
       <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2.5rem] p-6 md:p-10 shadow-2xl relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
@@ -777,7 +777,7 @@ const HomePage = () => {
 
             <HeroSearch />
 
-            <div className="flex flex-wrap gap-6">
+            <div className="flex flex-wrap gap-6 mt-12">
               <Link to="/catalog" className="px-10 py-5 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-500 transition-all shadow-2xl shadow-blue-600/40 flex items-center gap-3 text-lg group">
                 {t('btnViewCatalog')} <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
               </Link>
