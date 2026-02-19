@@ -2177,7 +2177,12 @@ const ProductManagement = () => {
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
           {filteredProducts.map(p => (
-            <motion.div layout key={p.id} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 group hover:shadow-xl transition-all duration-500">
+            <motion.div
+              layout
+              key={p.id}
+              onClick={() => handleEdit(p)}
+              className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 group hover:shadow-xl transition-all duration-500 cursor-pointer"
+            >
               <div className="flex items-center gap-5 mb-6">
                 <div className="relative group/img overflow-hidden rounded-2xl">
                   <img src={p.image} className="w-24 h-24 object-cover shadow-inner transition-transform duration-700 group-hover/img:scale-110" />
@@ -2193,7 +2198,12 @@ const ProductManagement = () => {
                 <button onClick={() => handleEdit(p)} className="flex-1 py-4 rounded-xl bg-slate-50 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-blue-900 hover:text-white transition-all">
                   <Edit3 size={18} /> Editar
                 </button>
-                <button onClick={() => handleDeleteClick(p.id)} className="p-4 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={20} /></button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDeleteClick(p.id); }}
+                  className="p-4 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                >
+                  <Trash2 size={20} />
+                </button>
               </div>
             </motion.div>
           ))}
@@ -2213,7 +2223,11 @@ const ProductManagement = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredProducts.map(p => (
-                <tr key={p.id} className="hover:bg-slate-50 transition-colors group">
+                <tr
+                  key={p.id}
+                  onClick={() => handleEdit(p)}
+                  className="hover:bg-slate-50 transition-colors group cursor-pointer"
+                >
                   <td className="p-6">
                     <div className="flex items-center gap-4">
                       <img src={p.image} className="w-12 h-12 rounded-xl object-cover shadow-sm" />
@@ -2233,8 +2247,18 @@ const ProductManagement = () => {
                   </td>
                   <td className="p-6 text-right">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => handleEdit(p)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-100 hover:text-blue-600 transition-colors"><Edit size={16} /></button>
-                      <button onClick={() => handleDeleteClick(p.id)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors"><Trash size={16} /></button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEdit(p); }}
+                        className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(p.id); }}
+                        className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors"
+                      >
+                        <Trash size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>
