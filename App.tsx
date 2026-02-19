@@ -581,7 +581,7 @@ const HeroSearch = () => {
   const [loading, setLoading] = useState(true);
 
   // Search State
-  const [activeTab, setActiveTab] = useState<'sedan' | 'suv' | 'truck' | 'agro' | 'moto'>('sedan');
+  const [activeTab, setActiveTab] = useState<'sedan' | 'suv' | 'truck' | 'agro'>('sedan');
   const [width, setWidth] = useState('');
   const [profile, setProfile] = useState('');
   const [rim, setRim] = useState('');
@@ -652,15 +652,14 @@ const HeroSearch = () => {
 
   const vehicleTypes = [
     { id: 'sedan', icon: CarFront, label: 'Auto' },
-    { id: 'suv', icon: Ship, label: 'SUV' }, // Using Ship as placeholder for 4x4 if needed or just Tent for Agro
+    { id: 'suv', icon: Ship, label: 'SUV' },
     { id: 'truck', icon: Truck, label: 'Camión' },
     { id: 'agro', icon: Tractor, label: 'Agro' },
-    { id: 'moto', icon: Bike, label: 'Moto' },
   ];
 
   return (
-    <div className="w-full max-w-5xl">
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl relative overflow-hidden group">
+    <div className="w-full max-w-4xl">
+      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2.5rem] p-6 md:p-10 shadow-2xl relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
         <div className="relative z-10">
@@ -668,17 +667,17 @@ const HeroSearch = () => {
             1. Seleccione el tipo de vehículo
           </div>
 
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-4 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {vehicleTypes.map((v) => (
               <button
                 key={v.id}
                 onClick={() => setActiveTab(v.id as any)}
-                className={`flex flex-col items-center gap-4 p-6 rounded-[2rem] transition-all duration-500 border-2 ${activeTab === v.id
+                className={`flex flex-col items-center gap-3 p-4 md:p-5 rounded-2xl transition-all duration-500 border-2 ${activeTab === v.id
                   ? 'bg-blue-600 border-blue-400 text-white shadow-xl shadow-blue-600/40 scale-105'
                   : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:border-white/20'
                   }`}
               >
-                <v.icon size={32} strokeWidth={1.5} />
+                <v.icon size={24} strokeWidth={1.5} />
                 <span className="text-xs font-black uppercase tracking-widest">{v.label}</span>
               </button>
             ))}
@@ -695,7 +694,7 @@ const HeroSearch = () => {
                 <select
                   value={width}
                   onChange={e => setWidth(e.target.value)}
-                  className="w-full bg-slate-900/50 text-white border-2 border-white/10 rounded-2xl px-6 py-5 font-black outline-none appearance-none focus:border-blue-500 transition-all cursor-pointer"
+                  className="w-full bg-slate-900/50 text-white border-2 border-white/10 rounded-xl px-5 py-4 font-black outline-none appearance-none focus:border-blue-500 transition-all cursor-pointer text-sm"
                 >
                   <option value="">Ancho</option>
                   {options.widths.map(w => <option key={w} value={w}>{w}</option>)}
@@ -710,7 +709,7 @@ const HeroSearch = () => {
                 <select
                   value={profile}
                   onChange={e => setProfile(e.target.value)}
-                  className="w-full bg-slate-900/50 text-white border-2 border-white/10 rounded-2xl px-6 py-5 font-black outline-none appearance-none focus:border-blue-500 transition-all cursor-pointer"
+                  className="w-full bg-slate-900/50 text-white border-2 border-white/10 rounded-xl px-5 py-4 font-black outline-none appearance-none focus:border-blue-500 transition-all cursor-pointer text-sm"
                 >
                   <option value="">Perfil</option>
                   {options.profiles.map(p => <option key={p} value={p}>{p}</option>)}
@@ -725,7 +724,7 @@ const HeroSearch = () => {
                 <select
                   value={rim}
                   onChange={e => setRim(e.target.value)}
-                  className="w-full bg-slate-900/50 text-white border-2 border-white/10 rounded-2xl px-6 py-5 font-black outline-none appearance-none focus:border-blue-500 transition-all cursor-pointer"
+                  className="w-full bg-slate-900/50 text-white border-2 border-white/10 rounded-xl px-5 py-4 font-black outline-none appearance-none focus:border-blue-500 transition-all cursor-pointer text-sm"
                 >
                   <option value="">Llanta</option>
                   {options.rims.map(r => <option key={r} value={r}>{r}</option>)}
@@ -736,9 +735,9 @@ const HeroSearch = () => {
 
             <button
               onClick={handleSearch}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-2xl py-5 font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-600/30 transition-all active:scale-95 flex items-center justify-center gap-3"
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-4 font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-600/30 transition-all active:scale-95 flex items-center justify-center gap-3 text-sm"
             >
-              <Search size={20} /> Buscar Neumático
+              <Search size={18} /> Buscar
             </button>
           </div>
         </div>
