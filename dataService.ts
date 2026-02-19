@@ -78,8 +78,10 @@ export const fetchProducts = async (): Promise<Product[]> => {
                 brandId: p.brand_id,
                 categoryId: p.category_id,
                 price: Number(p.price) || 0,
+                techSheetImage: p.tech_sheet_image,
                 brand_id: undefined,
                 category_id: undefined,
+                tech_sheet_image: undefined,
                 variants: productVariants
             };
         }) as Product[];
@@ -94,8 +96,8 @@ export const createProduct = async (product: Omit<Product, 'id'>) => {
     try {
         // We use name field if it exists, otherwise empty string or description
         await sql`
-            INSERT INTO products (id, brand_id, size, category_id, description, name, image, price, status)
-            VALUES (${id}, ${product.brandId}, ${product.size}, ${product.categoryId}, ${product.description}, ${product.name || ''}, ${product.image}, ${product.price}, ${product.status})
+            INSERT INTO products (id, brand_id, size, category_id, description, name, image, tech_sheet_image, price, status)
+            VALUES (${id}, ${product.brandId}, ${product.size}, ${product.categoryId}, ${product.description}, ${product.name || ''}, ${product.image}, ${product.techSheetImage || null}, ${product.price}, ${product.status})
         `;
 
         if (product.variants && product.variants.length > 0) {
@@ -131,6 +133,7 @@ export const updateProduct = async (product: Product) => {
                 description = ${product.description}, 
                 name = ${product.name || ''},
                 image = ${product.image}, 
+                tech_sheet_image = ${product.techSheetImage || null},
                 price = ${product.price},
                 status = ${product.status}
             WHERE id = ${product.id}

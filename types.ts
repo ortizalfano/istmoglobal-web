@@ -29,6 +29,7 @@ export interface Product {
   categoryId: string;
   description: string;
   image: string;
+  techSheetImage?: string; // Added for technical sheet image
   status: 'Active' | 'Inactive';
   variants?: ProductVariant[];
   // Keep size and price for backward compatibility or as defaults

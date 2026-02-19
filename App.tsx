@@ -460,6 +460,29 @@ const ProductDetailModal = ({ product, isOpen, onClose }: { product: Product | n
                   <div className="text-xs font-bold text-slate-400 uppercase mb-1">Categoría</div>
                   <div className="font-bold text-slate-900">Premium Tire</div>
                 </div>
+
+                {product.techSheetImage && (
+                  <div className="col-span-2 mt-4">
+                    <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Ficha Técnica</div>
+                    <div className="relative group/tech overflow-hidden rounded-[2rem] border-2 border-slate-100 bg-white p-2">
+                      <img
+                        src={product.techSheetImage}
+                        alt="Ficha Técnica"
+                        className="w-full h-auto object-contain max-h-[300px] rounded-[1.5rem] transition-transform duration-500 group-hover/tech:scale-[1.02]"
+                      />
+                      <a
+                        href={product.techSheetImage}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute inset-0 bg-blue-900/0 group-hover/tech:bg-blue-900/10 flex items-center justify-center transition-all duration-300"
+                      >
+                        <div className="opacity-0 group-hover/tech:opacity-100 bg-white text-blue-900 px-6 py-3 rounded-xl font-bold text-sm shadow-xl flex items-center gap-2 transform translate-y-4 group-hover/tech:translate-y-0 transition-all duration-300">
+                          <Search size={18} /> Ver Pantalla Completa
+                        </div>
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1679,6 +1702,7 @@ const ProductManagement = () => {
     description: '',
     status: 'Active',
     image: '',
+    techSheetImage: '',
     price: 0,
     variants: []
   });
@@ -1690,8 +1714,8 @@ const ProductManagement = () => {
   const [importProgress, setImportProgress] = useState(0);
 
   const downloadTemplate = () => {
-    const headers = ["Marca", "Modelo", "Categoria", "Descripcion", "Medida", "Precio", "ImagenURL"];
-    const example = ["Ardent", "VANTI AS", "Passenger", "Neumático de alto rendimiento", "205/55 R16", "45.00", "https://picsum.photos/seed/tire1/800/800"];
+    const headers = ["Marca", "Modelo", "Categoria", "Descripcion", "Medida", "Precio", "ImagenURL", "FichaTecnicaURL"];
+    const example = ["Ardent", "VANTI AS", "Passenger", "Neumático de alto rendimiento", "205/55 R16", "45.00", "https://picsum.photos/seed/tire1/800/800", "https://picsum.photos/seed/tech/800/800"];
     const csvContent = [headers, example].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
@@ -1718,16 +1742,52 @@ const ProductManagement = () => {
         // Group by Brand + Model to handle variants
         const productsMap: { [key: string]: any } = {};
 
-        data.forEach(row => {
-          const key = `${row.Marca}-${row.Modelo}`;
+        // Cache current brands and categories to avoid collisions
+        let currentBrands = [...brands];
+        let currentCategories = [...categories];
+
+        for (const row of data) {
+          const brandName = (row.Marca || '').trim();
+          const categoryName = (row.Categoria || '').trim();
+
+          if (!brandName) continue;
+
+          // Find or create Brand
+          let brand = currentBrands.find(b => b.name.toLowerCase() === brandName.toLowerCase());
+          if (!brand) {
+            try {
+              const newBrand = await createBrand({ name: brandName, image: 'https://picsum.photos/seed/brand/800/800', description: '' });
+              brand = newBrand as Brand;
+              currentBrands.push(brand);
+              setBrands([...currentBrands]);
+            } catch (e) {
+              console.error("Error creating brand during import", e);
+            }
+          }
+
+          // Find or create Category
+          let category = currentCategories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
+          if (!category && categoryName) {
+            try {
+              const newCat = await createCategory({ name: categoryName, description: '' });
+              category = newCat as Category;
+              currentCategories.push(category);
+              setCategories([...currentCategories]);
+            } catch (e) {
+              console.error("Error creating category during import", e);
+            }
+          }
+
+          const key = `${brandName}-${row.Modelo}`;
           if (!productsMap[key]) {
             productsMap[key] = {
-              brandId: brands.find(b => b.name.toLowerCase() === row.Marca?.toLowerCase())?.id || brands[0]?.id,
-              name: row.Modelo || '',
-              categoryId: categories.find(c => c.name.toLowerCase() === row.Categoria?.toLowerCase())?.id || categories[0]?.id,
-              description: row.Descripcion || '',
+              brandId: brand?.id || currentBrands[0]?.id,
+              name: (row.Modelo || '').trim(),
+              categoryId: category?.id || currentCategories[0]?.id,
+              description: (row.Descripcion || '').trim(),
               status: 'Active',
               image: row.ImagenURL || 'https://picsum.photos/seed/tire/800/800',
+              techSheetImage: row.FichaTecnicaURL || '',
               variants: []
             };
           }
@@ -1740,7 +1800,7 @@ const ProductManagement = () => {
               status: 'Active'
             });
           }
-        });
+        }
 
         const productList = Object.values(productsMap);
         const total = productList.length;
@@ -1840,7 +1900,7 @@ const ProductManagement = () => {
           >
             <FileUp size={20} /> Importar
           </button>
-          <button onClick={() => { setCurrentProduct({ brandId: brands[0]?.id || '', name: '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '', price: 0, variants: [] }); setIsEditing(true); }}
+          <button onClick={() => { setCurrentProduct({ brandId: brands[0]?.id || '', name: '', size: '', categoryId: categories[0]?.id || '', description: '', status: 'Active', image: '', techSheetImage: '', price: 0, variants: [] }); setIsEditing(true); }}
             className="flex items-center gap-3 px-8 py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20"
           >
             <Plus size={20} /> Nuevo Modelo
@@ -1950,12 +2010,21 @@ const ProductManagement = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <ImageUpload
-                    currentImage={currentProduct.image}
-                    onImageUploaded={(url) => setCurrentProduct(prev => ({ ...prev, image: url }))}
-                    label="Imagen del Modelo"
-                  />
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <ImageUpload
+                      currentImage={currentProduct.image}
+                      onImageUploaded={(url) => setCurrentProduct(prev => ({ ...prev, image: url }))}
+                      label="Imagen del Modelo"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <ImageUpload
+                      currentImage={currentProduct.techSheetImage}
+                      onImageUploaded={(url) => setCurrentProduct(prev => ({ ...prev, techSheetImage: url }))}
+                      label="Ficha Técnica (Imagen)"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase text-slate-400">Descripción Destacada</label>
