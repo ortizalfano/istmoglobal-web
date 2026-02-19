@@ -659,17 +659,35 @@ const HeroSearch = () => {
   const options = getOptions();
 
   const handleSearch = () => {
+    // Robust mapping for categories
+    const catMapping: Record<string, string[]> = {
+      sedan: ['passenger', 'pasaje', 'auto'],
+      suv: ['suv', 'camioneta', '4x4'],
+      truck: ['truck', 'camión', 'transporte'],
+      agro: ['industrial', 'agrícola', 'construcción', 'tractor'],
+    };
+
+    const targetKeywords = catMapping[activeTab] || [];
+    const cat = categories.find(c =>
+      targetKeywords.some(kw => c.name.toLowerCase().includes(kw))
+    );
+
     let query = '';
     if (width) query += width;
     if (profile) query += `/${profile}`;
     if (rim) query += `R${rim}`;
 
-    navigate(`/catalog?search=${encodeURIComponent(query.trim())}`);
+    const searchStr = query.trim();
+    const params = new URLSearchParams();
+    if (searchStr) params.set('search', searchStr);
+    if (cat) params.set('category', cat.id);
+
+    navigate(`/catalog?${params.toString()}`);
   };
 
   const vehicleTypes = [
     { id: 'sedan', icon: CarFront, label: 'Auto' },
-    { id: 'suv', icon: Ship, label: 'SUV' },
+    { id: 'suv', icon: Car, label: 'SUV' },
     { id: 'truck', icon: Truck, label: 'Camión' },
     { id: 'agro', icon: Tractor, label: 'Agro' },
   ];
@@ -1231,10 +1249,16 @@ const CatalogPage = () => {
   useEffect(() => {
     const brandParam = searchParams.get('brand');
     const searchParam = searchParams.get('search');
+    const categoryParam = searchParams.get('category');
+
     if (brandParam) {
       setSearch(brandParam);
     } else if (searchParam) {
       setSearch(searchParam);
+    }
+
+    if (categoryParam) {
+      setFilter(categoryParam);
     }
   }, [searchParams]);
 
