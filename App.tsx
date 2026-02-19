@@ -619,13 +619,30 @@ const HeroSearch = () => {
     const rims = new Set<string>();
 
     allSizes.forEach(s => {
-      // Common formats: 205/55 R16, 12R22.5, 31x10.5 R15
-      const parts = s.split(/[\/\sR\-x]/).filter(Boolean);
+      // Standard format: 205/55R16 or 205/55 R16
+      const standardMatch = s.match(/(\d{2,3})\/(\d{2,3})[\sR]*(\d{2,3}[A-Z]*)/i);
+      if (standardMatch) {
+        widths.add(standardMatch[1]);
+        profiles.add(standardMatch[2]);
+        rims.add(standardMatch[3]);
+        return;
+      }
+
+      // Simple format: 175R14 or 175 R14 or 12R22.5
+      const simpleMatch = s.match(/(\d{1,3}(?:\.\d+)?)[\sR]+(\d{1,3}(?:\.\d+)?(?:[A-Z]*))/i);
+      if (simpleMatch) {
+        widths.add(simpleMatch[1]);
+        rims.add(simpleMatch[2]);
+        return;
+      }
+
+      // Fallback for others (split strictly by profile/rim separators)
+      const parts = s.split(/[\/\sR]/).filter(p => p && /^\d/.test(p)); // Only keep parts starting with numbers
       if (parts.length >= 2) {
         widths.add(parts[0]);
         if (parts.length >= 3) {
           profiles.add(parts[1]);
-          rims.add(parts[parts.length - 1]);
+          rims.add(parts[2]);
         } else {
           rims.add(parts[1]);
         }
@@ -645,7 +662,7 @@ const HeroSearch = () => {
     let query = '';
     if (width) query += width;
     if (profile) query += `/${profile}`;
-    if (rim) query += ` R${rim}`;
+    if (rim) query += `R${rim}`;
 
     navigate(`/catalog?search=${encodeURIComponent(query.trim())}`);
   };
@@ -1241,10 +1258,27 @@ const CatalogPage = () => {
   const filtered = products.filter(p => {
     const brandName = brands.find(b => b.id === p.brandId)?.name || '';
     const variantSizes = p.variants?.map(v => v.size).join(' ') || '';
-    const matchesSearch = brandName.toLowerCase().includes(search.toLowerCase()) ||
-      p.size.toLowerCase().includes(search.toLowerCase()) ||
-      (p.name || '').toLowerCase().includes(search.toLowerCase()) ||
-      variantSizes.toLowerCase().includes(search.toLowerCase());
+
+    const searchLower = search.toLowerCase();
+    const searchNoSpace = searchLower.replace(/\s+/g, '');
+
+    const brandLower = brandName.toLowerCase();
+    const pNameLower = (p.name || '').toLowerCase();
+    const pSizeLower = p.size.toLowerCase();
+    const variantsLower = variantSizes.toLowerCase();
+
+    const matchesSearch =
+      brandLower.includes(searchLower) ||
+      pNameLower.includes(searchLower) ||
+      pSizeLower.includes(searchLower) ||
+      variantsLower.includes(searchLower) ||
+      // Space-insensitive fallback for size matching
+      (searchNoSpace.length > 2 && (
+        brandLower.replace(/\s+/g, '').includes(searchNoSpace) ||
+        pNameLower.replace(/\s+/g, '').includes(searchNoSpace) ||
+        pSizeLower.replace(/\s+/g, '').includes(searchNoSpace) ||
+        variantsLower.replace(/\s+/g, '').includes(searchNoSpace)
+      ));
 
     const productCategoryId = p.categoryId;
     const matchesFilter = filter === 'All' || productCategoryId === filter;
@@ -1955,7 +1989,11 @@ const ProductManagement = () => {
     const brandName = brands.find(b => b.id === p.brandId)?.name || '';
     const categoryName = categories.find(c => c.id === p.categoryId)?.name || '';
     const searchableText = `${brandName} ${p.name} ${categoryName} ${p.size} ${p.variants?.map(v => v.size).join(' ')}`.toLowerCase();
-    return searchableText.includes(searchQuery.toLowerCase());
+    const queryLower = searchQuery.toLowerCase();
+    const queryNoSpace = queryLower.replace(/\s+/g, '');
+
+    return searchableText.includes(queryLower) ||
+      (queryNoSpace.length > 2 && searchableText.replace(/\s+/g, '').includes(queryNoSpace));
   });
 
   return (
