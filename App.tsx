@@ -7,7 +7,8 @@ import {
   Zap, BarChart2, Users, Package, Settings, LogOut, Plus, Trash2,
   AlertTriangle, // Added for deletion warning modal
   Edit, Filter, LayoutGrid, Award, ShoppingCart, MessageSquare, Edit3, CheckCircle, Minus, Trash, List,
-  Ship, Container, Globe, Target, Activity, Lock, FileUp, Download // Added FileUp and Download
+  Ship, Container, Globe, Target, Activity, Lock, FileUp, Download,
+  Tractor, CarFront, Bike, Car, Tent // Added for hero search
 } from 'lucide-react';
 import Papa from 'papaparse';
 import ImageUpload from './ImageUpload';
@@ -574,163 +575,174 @@ const FeaturedBrands = () => {
 
 const HeroSearch = () => {
   const { t } = useContext(LanguageContext);
-  const { addToCart } = useCart();
-  const { settings } = useContext(SettingsContext);
-  const [brandQuery, setBrandQuery] = useState('');
-  const [selectedSize, setSelectedSize] = useState('');
-  const [results, setResults] = useState<Product[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-  const [brands, setBrands] = useState<Brand[]>([]);
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
-
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load data from DB
+  // Search State
+  const [activeTab, setActiveTab] = useState<'sedan' | 'suv' | 'truck' | 'agro' | 'moto'>('sedan');
+  const [width, setWidth] = useState('');
+  const [profile, setProfile] = useState('');
+  const [rim, setRim] = useState('');
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [loadedBrands, loadedProducts] = await Promise.all([
-          fetchBrands(),
-          fetchProducts()
-        ]);
-        setBrands(loadedBrands);
-        setProducts(loadedProducts.filter(p => p.status === 'Active'));
-      } catch (err) {
-        console.error("Failed to load search data", err);
-      } finally {
-        setLoading(false);
-      }
+    Promise.all([fetchProducts(), fetchCategories()]).then(([p, c]) => {
+      setProducts(p.filter(item => item.status === 'Active'));
+      setCategories(c);
+      setLoading(false);
+    });
+  }, []);
+
+  // Parse dimensions based on active tab
+  const getOptions = () => {
+    // Robust mapping for categories
+    const catMapping: Record<string, string[]> = {
+      sedan: ['passenger', 'pasaje', 'auto'],
+      suv: ['suv', 'camioneta', '4x4'],
+      truck: ['truck', 'camión', 'transporte'],
+      agro: ['industrial', 'agrícola', 'construcción', 'tractor'],
+      moto: ['moto', 'motocicleta']
     };
-    loadData();
-  }, []); // Run once on mount
 
-  // Extract unique sizes
-  const sizes = Array.from(new Set(products.flatMap(p => [p.size, ...(p.variants?.map(v => v.size) || [])]))).filter(Boolean).sort();
+    const targetKeywords = catMapping[activeTab] || [];
+    const cat = categories.find(c =>
+      targetKeywords.some(kw => c.name.toLowerCase().includes(kw))
+    );
 
-  const navigate = useNavigate();
+    const filteredProducts = products.filter(p => !cat || p.categoryId === cat.id);
 
-  useEffect(() => {
-    if (brandQuery.length > 0 || selectedSize) {
-      const filtered = products.filter(p => {
-        const brandName = brands.find(b => b.id === p.brandId)?.name || '';
-        const variantSizes = p.variants?.map(v => v.size) || [];
-        const matchBrand = brandQuery ?
-          (brandName.toLowerCase().includes(brandQuery.toLowerCase()) ||
-            (p.name || '').toLowerCase().includes(brandQuery.toLowerCase())) : true;
-        const matchSize = selectedSize ? (p.size === selectedSize || variantSizes.includes(selectedSize)) : true;
-        return matchBrand && matchSize;
-      });
-      setResults(filtered.slice(0, 5));
-    } else {
-      setResults([]);
-    }
-  }, [brandQuery, selectedSize, products, brands]);
+    const allSizes = filteredProducts.flatMap(p => [p.size, ...(p.variants?.map(v => v.size) || [])]).filter(Boolean);
 
-  const handleSearch = () => {
-    if (results.length > 0) {
-      const interest = brandQuery ? `${brandQuery} ${selectedSize}`.trim() : selectedSize;
-      navigate(`/contact?interest=${interest}`);
-    } else {
-      navigate('/catalog');
-    }
+    const widths = new Set<string>();
+    const profiles = new Set<string>();
+    const rims = new Set<string>();
+
+    allSizes.forEach(s => {
+      // Common formats: 205/55 R16, 12R22.5, 31x10.5 R15
+      const parts = s.split(/[\/\sR\-x]/).filter(Boolean);
+      if (parts.length >= 2) {
+        widths.add(parts[0]);
+        if (parts.length >= 3) {
+          profiles.add(parts[1]);
+          rims.add(parts[parts.length - 1]);
+        } else {
+          rims.add(parts[1]);
+        }
+      }
+    });
+
+    return {
+      widths: Array.from(widths).sort(),
+      profiles: Array.from(profiles).sort(),
+      rims: Array.from(rims).sort()
+    };
   };
 
+  const options = getOptions();
+
+  const handleSearch = () => {
+    let query = '';
+    if (width) query += width;
+    if (profile) query += `/${profile}`;
+    if (rim) query += ` R${rim}`;
+
+    navigate(`/catalog?search=${encodeURIComponent(query.trim())}`);
+  };
+
+  const vehicleTypes = [
+    { id: 'sedan', icon: CarFront, label: 'Auto' },
+    { id: 'suv', icon: Ship, label: 'SUV' }, // Using Ship as placeholder for 4x4 if needed or just Tent for Agro
+    { id: 'truck', icon: Truck, label: 'Camión' },
+    { id: 'agro', icon: Tractor, label: 'Agro' },
+    { id: 'moto', icon: Bike, label: 'Moto' },
+  ];
+
   return (
-    <div className="relative max-w-4xl w-full mb-12">
-      <div className="bg-white rounded-2xl shadow-2xl p-2 pl-6 flex flex-col md:flex-row items-center gap-2 md:gap-0">
+    <div className="w-full max-w-5xl">
+      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
-        {/* Brand/Text Input Section */}
-        <div className="flex-1 flex items-center gap-3 w-full">
-          <Search className="text-slate-400" size={20} />
-          <input
-            type="text"
-            className="w-full py-3 bg-transparent text-slate-900 placeholder-slate-500 font-medium focus:outline-none"
-            placeholder="Buscar por marca..."
-            value={brandQuery}
-            onChange={(e) => setBrandQuery(e.target.value)}
-          />
-        </div>
+        <div className="relative z-10">
+          <div className="text-white/60 text-xs font-black uppercase tracking-[0.3em] mb-8 text-center md:text-left">
+            1. Seleccione el tipo de vehículo
+          </div>
 
-        {/* Divider */}
-        <div className="hidden md:block w-px h-8 bg-slate-200 mx-4"></div>
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-4 mb-12">
+            {vehicleTypes.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setActiveTab(v.id as any)}
+                className={`flex flex-col items-center gap-4 p-6 rounded-[2rem] transition-all duration-500 border-2 ${activeTab === v.id
+                  ? 'bg-blue-600 border-blue-400 text-white shadow-xl shadow-blue-600/40 scale-105'
+                  : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:border-white/20'
+                  }`}
+              >
+                <v.icon size={32} strokeWidth={1.5} />
+                <span className="text-xs font-black uppercase tracking-widest">{v.label}</span>
+              </button>
+            ))}
+          </div>
 
-        {/* Size Dropdown Section */}
-        <div className="flex-1 flex items-center gap-3 w-full border-t md:border-0 border-slate-100 pt-2 md:pt-0">
-          <Filter className="text-slate-400" size={20} />
-          <div className="relative w-full">
-            <select
-              className="w-full py-3 bg-transparent text-slate-900 font-bold focus:outline-none appearance-none cursor-pointer"
-              value={selectedSize}
-              onChange={(e) => setSelectedSize(e.target.value)}
+          <div className="text-white/60 text-xs font-black uppercase tracking-[0.3em] mb-8 text-center md:text-left">
+            2. Medidas del Neumático
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-4">Ancho (A)</label>
+              <div className="relative">
+                <select
+                  value={width}
+                  onChange={e => setWidth(e.target.value)}
+                  className="w-full bg-slate-900/50 text-white border-2 border-white/10 rounded-2xl px-6 py-5 font-black outline-none appearance-none focus:border-blue-500 transition-all cursor-pointer"
+                >
+                  <option value="">Ancho</option>
+                  {options.widths.map(w => <option key={w} value={w}>{w}</option>)}
+                </select>
+                <ChevronRight size={18} className="absolute right-6 top-1/2 -translate-y-1/2 rotate-90 text-white/20 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-4">Perfil (B)</label>
+              <div className="relative">
+                <select
+                  value={profile}
+                  onChange={e => setProfile(e.target.value)}
+                  className="w-full bg-slate-900/50 text-white border-2 border-white/10 rounded-2xl px-6 py-5 font-black outline-none appearance-none focus:border-blue-500 transition-all cursor-pointer"
+                >
+                  <option value="">Perfil</option>
+                  {options.profiles.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <ChevronRight size={18} className="absolute right-6 top-1/2 -translate-y-1/2 rotate-90 text-white/20 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-4">Llanta (C)</label>
+              <div className="relative">
+                <select
+                  value={rim}
+                  onChange={e => setRim(e.target.value)}
+                  className="w-full bg-slate-900/50 text-white border-2 border-white/10 rounded-2xl px-6 py-5 font-black outline-none appearance-none focus:border-blue-500 transition-all cursor-pointer"
+                >
+                  <option value="">Llanta</option>
+                  {options.rims.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+                <ChevronRight size={18} className="absolute right-6 top-1/2 -translate-y-1/2 rotate-90 text-white/20 pointer-events-none" />
+              </div>
+            </div>
+
+            <button
+              onClick={handleSearch}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-2xl py-5 font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-600/30 transition-all active:scale-95 flex items-center justify-center gap-3"
             >
-              <option value="" className="text-slate-500 font-normal">Todas las medidas</option>
-              {sizes.map(s => (
-                <option key={s} value={s} className="text-slate-900">{s}</option>
-              ))}
-            </select>
-            <ChevronRight className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 rotate-90 pointer-events-none" size={16} />
+              <Search size={20} /> Buscar Neumático
+            </button>
           </div>
         </div>
-
-        {/* Search Button */}
-        <button
-          onClick={handleSearch}
-          className="bg-blue-600 hover:bg-blue-500 text-white p-3 md:px-8 md:py-3 rounded-xl font-bold shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 w-full md:w-auto mt-2 md:mt-0 md:ml-4"
-        >
-          <Search size={20} className="md:hidden" />
-          <span className="hidden md:inline">Buscar</span>
-        </button>
       </div>
-
-      <AnimatePresence>
-        {results.length > 0 && (brandQuery || selectedSize) && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="absolute top-full left-0 right-0 mt-4 bg-white rounded-3xl shadow-xl overflow-hidden z-40 border border-slate-100 mx-4"
-          >
-            <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-              <span className="text-xs font-black uppercase text-slate-400 tracking-widest">{results.length} Resultados</span>
-              <button onClick={() => { setBrandQuery(''); setSelectedSize('') }} className="text-xs font-bold text-red-400 hover:text-red-500">{t('btnClearFilters')}</button>
-            </div>
-            {results.map((p) => {
-              const brandName = brands.find(b => b.id === p.brandId)?.name || 'Unknown';
-              return (
-                <div
-                  key={p.id}
-                  className="flex items-center gap-4 p-4 hover:bg-blue-50 cursor-pointer transition-colors border-b border-slate-100 last:border-0 group"
-                  onClick={() => setSelectedProduct(p)}
-                >
-                  <img src={p.image} alt={brandName} className="w-12 h-12 rounded-xl object-cover bg-slate-100" />
-                  <div className="flex-1">
-                    <div className="font-bold text-slate-900">{brandName} {p.name}</div>
-                    <div className="text-xs font-bold text-blue-500 uppercase tracking-widest">{p.size} {p.variants?.length ? `+ ${p.variants.length} más` : ''}</div>
-                    {settings.show_prices && p.price && <div className="text-xs font-black text-slate-900">Desde ${p.price}</div>}
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); addToCart(p); }}
-                    className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all"
-                  >
-                    <Plus size={16} />
-                  </button>
-                  <ArrowRight size={16} className="text-slate-300 group-hover:text-blue-600 transition-colors" />
-                </div>
-              );
-            })}
-            <div className="p-3 text-center bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => navigate('/catalog')}>
-              <span className="text-xs font-black text-blue-900 uppercase tracking-widest">Ver todos los resultados</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <ProductDetailModal
-        product={selectedProduct}
-        isOpen={!!selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-      />
     </div>
   );
 };
@@ -1202,8 +1214,11 @@ const CatalogPage = () => {
 
   useEffect(() => {
     const brandParam = searchParams.get('brand');
+    const searchParam = searchParams.get('search');
     if (brandParam) {
       setSearch(brandParam);
+    } else if (searchParam) {
+      setSearch(searchParam);
     }
   }, [searchParams]);
 
