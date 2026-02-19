@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { HashRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Menu, X, Search, ShoppingBag, ArrowRight, Instagram, Facebook,
   Globe2, Mail, Phone, MapPin, ChevronRight, Star, Truck, Shield,
@@ -538,7 +538,7 @@ const FeaturedBrands = () => {
           {brands.map((brand, idx) => (
             <FadeIn key={brand.id} delay={idx * 0.1}>
               <div
-                onClick={() => navigate('/catalog')}
+                onClick={() => navigate(`/catalog?brand=${encodeURIComponent(brand.name)}`)}
                 className="group relative aspect-square bg-slate-50 rounded-3xl flex items-center justify-center p-6 cursor-pointer hover:shadow-xl transition-all duration-300 border border-slate-100"
               >
                 <div className="w-full h-full flex items-center justify-center p-6 rounded-[inherit] overflow-hidden">
@@ -1194,10 +1194,18 @@ const AboutPage = () => {
 const CatalogPage = () => {
   const { t } = useContext(LanguageContext);
   const { settings } = useContext(SettingsContext);
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const brandParam = searchParams.get('brand');
+    if (brandParam) {
+      setSearch(brandParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     Promise.all([
