@@ -1214,6 +1214,7 @@ const CatalogPage = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const filtered = products.filter(p => {
     const brandName = brands.find(b => b.id === p.brandId)?.name || '';
@@ -1264,39 +1265,95 @@ const CatalogPage = () => {
               <ChevronRight size={20} className="rotate-90" />
             </div>
           </div>
+
+          <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200 self-center md:self-stretch">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-4 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-blue-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+              title="Vista Cuadrícula"
+            >
+              <LayoutGrid size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-blue-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+              title="Vista Lista"
+            >
+              <List size={20} />
+            </button>
+          </div>
         </div>
 
         {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {filtered.map((p, idx) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="bg-white rounded-[2rem] overflow-hidden border border-slate-100 flex flex-col group hover:shadow-2xl transition-all duration-500"
-              >
-                <div className="aspect-square relative overflow-hidden bg-slate-50">
-                  <img src={p.image} alt="Tire" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  <div className="absolute top-4 left-4">
-                    <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-blue-900 shadow-sm border border-white">
-                      {categories.find(c => c.id === p.categoryId)?.name || 'General'}
-                    </span>
+          viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {filtered.map((p, idx) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="bg-white rounded-[2rem] overflow-hidden border border-slate-100 flex flex-col group hover:shadow-2xl transition-all duration-500"
+                >
+                  <div className="aspect-square relative overflow-hidden bg-slate-50">
+                    <img src={p.image} alt="Tire" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute top-4 left-4">
+                      <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-blue-900 shadow-sm border border-white">
+                        {categories.find(c => c.id === p.categoryId)?.name || 'General'}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="p-8">
-                  <h3 className="text-xl font-black text-slate-900 mb-1 leading-tight">{brands.find(b => b.id === p.brandId)?.name || 'Unknown Brand'} {p.name}</h3>
-                  <div className="flex justify-between items-center mb-6">
-                    <p className="text-slate-400 font-bold">{p.variants?.length || 1} Medidas</p>
-                    {settings.show_prices && <p className="text-blue-600 font-bold text-lg">Desde ${p.price?.toFixed(2) || '0.00'}</p>}
+                  <div className="p-8">
+                    <h3 className="text-xl font-black text-slate-900 mb-1 leading-tight">{brands.find(b => b.id === p.brandId)?.name || 'Unknown Brand'} {p.name}</h3>
+                    <div className="flex justify-between items-center mb-6">
+                      <p className="text-slate-400 font-bold">{p.variants?.length || 1} Medidas</p>
+                      {settings.show_prices && <p className="text-blue-600 font-bold text-lg">Desde ${p.price?.toFixed(2) || '0.00'}</p>}
+                    </div>
+                    <button onClick={() => setSelectedProduct(p)} className="w-full block py-4 rounded-xl bg-blue-50 text-blue-900 text-center font-black hover:bg-blue-900 hover:text-white transition-all text-sm uppercase tracking-wider">
+                      Detalles
+                    </button>
                   </div>
-                  <button onClick={() => setSelectedProduct(p)} className="w-full block py-4 rounded-xl bg-blue-50 text-blue-900 text-center font-black hover:bg-blue-900 hover:text-white transition-all text-sm uppercase tracking-wider">
-                    Detalles
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {filtered.map((p, idx) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  onClick={() => setSelectedProduct(p)}
+                  className="bg-white rounded-[2rem] overflow-hidden border border-slate-100 p-6 flex items-center gap-8 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                >
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-slate-50 flex-shrink-0">
+                    <img src={p.image} alt="Tire" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="px-3 py-1 rounded-full bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400 border border-slate-100">
+                        {categories.find(c => c.id === p.categoryId)?.name || 'General'}
+                      </span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 mb-1 leading-tight truncate">{brands.find(b => b.id === p.brandId)?.name || 'Unknown Brand'} {p.name}</h3>
+                    <p className="text-slate-400 font-bold text-sm sm:text-base">{p.variants?.length || 1} Medidas disponibles</p>
+                  </div>
+                  <div className="text-right flex flex-col items-end gap-4">
+                    {settings.show_prices && (
+                      <div>
+                        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mb-1">Desde</p>
+                        <p className="text-2xl sm:text-3xl font-black text-blue-900">${p.price?.toFixed(2) || '0.00'}</p>
+                      </div>
+                    )}
+                    <button className="hidden sm:flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-50 text-blue-900 font-bold hover:bg-blue-900 hover:text-white transition-all text-xs uppercase tracking-widest">
+                      Ver Detalles <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )
         ) : (
           <div className="py-32 text-center bg-white rounded-[3rem] border border-slate-100 shadow-inner">
             <Search size={64} className="mx-auto text-slate-100 mb-6" />
